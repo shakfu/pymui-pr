@@ -95,59 +95,59 @@ cdef extern from "microui.h":
     ctypedef void* mu_Font
     
     # Basic structs
-    cdef struct mu_Vec2:
+    ctypedef struct mu_Vec2:
         int x
         int y
     
-    cdef struct mu_Rect:
+    ctypedef struct mu_Rect:
         int x
         int y
         int w
         int h
     
-    cdef struct mu_Color:
+    ctypedef struct mu_Color:
         unsigned char r
         unsigned char g
         unsigned char b
         unsigned char a
     
-    cdef struct mu_PoolItem:
+    ctypedef struct mu_PoolItem:
         mu_Id id
         int last_update
     
     # Command structs
-    cdef struct mu_BaseCommand:
+    ctypedef struct mu_BaseCommand:
         int type
         int size
     
-    cdef struct mu_JumpCommand:
+    ctypedef struct mu_JumpCommand:
         mu_BaseCommand base
         void* dst
     
-    cdef struct mu_ClipCommand:
+    ctypedef struct mu_ClipCommand:
         mu_BaseCommand base
         mu_Rect rect
     
-    cdef struct mu_RectCommand:
+    ctypedef struct mu_RectCommand:
         mu_BaseCommand base
         mu_Rect rect
         mu_Color color
     
-    cdef struct mu_TextCommand:
+    ctypedef struct mu_TextCommand:
         mu_BaseCommand base
         mu_Font font
         mu_Vec2 pos
         mu_Color color
         char str[1]
     
-    cdef struct mu_IconCommand:
+    ctypedef struct mu_IconCommand:
         mu_BaseCommand base
         mu_Rect rect
         int id
         mu_Color color
     
     # Command union
-    cdef union mu_Command:
+    ctypedef union mu_Command:
         int type
         mu_BaseCommand base
         mu_JumpCommand jump
@@ -157,7 +157,7 @@ cdef extern from "microui.h":
         mu_IconCommand icon
     
     # Layout struct
-    cdef struct mu_Layout:
+    ctypedef struct mu_Layout:
         mu_Rect body
         mu_Rect next
         mu_Vec2 position
@@ -171,7 +171,7 @@ cdef extern from "microui.h":
         int indent
     
     # Container struct
-    cdef struct mu_Container:
+    ctypedef struct mu_Container:
         mu_Command* head
         mu_Command* tail
         mu_Rect rect
@@ -182,7 +182,7 @@ cdef extern from "microui.h":
         int open
     
     # Style struct
-    cdef struct mu_Style:
+    ctypedef struct mu_Style:
         mu_Font font
         mu_Vec2 size
         int padding
@@ -194,7 +194,7 @@ cdef extern from "microui.h":
         mu_Color colors[MU_COLOR_MAX]
     
     # Main Context struct
-    cdef struct mu_Context:
+    ctypedef struct mu_Context:
         # callbacks
         int (*text_width)(mu_Font font, const char* str, int len)
         int (*text_height)(mu_Font font)
