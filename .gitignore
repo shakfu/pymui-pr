@@ -1,16 +1,27 @@
-# temporary stuff
-*.swp
-*~
-
 .DS_Store
 
-# Python-generated files
+# editor config
+.clangd
+.vscode
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
 build/
 dist/
-wheels/
-*.egg-info
+sdist/
 
-# Virtual environments
+# Environments
+.env
 .venv
+
+# cache
+.*_cache/
+*.egg-info
+.ropeproject
