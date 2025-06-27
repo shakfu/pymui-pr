@@ -235,7 +235,13 @@ cdef class Style:
             self._style.colors[index] = color.to_c()
         else:
             raise IndexError("Color index out of range")
-    
+
+    @staticmethod
+    cdef Style from_c(mu_Style _style):
+        cdef Style instance = Style.__new__(Style)
+        instance._style = _style
+        return instance
+
     cdef mu_Style* get_ptr(self):
         return &self._style
 
@@ -244,12 +250,10 @@ cdef class Style:
 cdef class Context:
     cdef mu_Context* _ctx
     cdef bint _owner
-    cdef Style _style
     
     def __cinit__(self):
         self._ctx = NULL
         self._owner = False
-        self._style = Style()
     
     def __dealloc__(self):
         if self._ctx is not NULL and self._owner:
@@ -262,12 +266,10 @@ cdef class Context:
             raise MemoryError("Failed to allocate Context")
         self._owner = True
         mu_init(self._ctx)
-        # cdef mu_Style* ptr = <mu_Style*>self._style.get_ptr()
-        # self._ctx.style = <mu_Style*>self._style.get_ptr()
     
-    @property
-    def style(self) -> Style:
-        return self._style
+    # @property
+    # def style(self) -> Style:
+    #     return Style.from_c(self._ctx._style)
     
     def begin(self):
         """Start a new frame"""
