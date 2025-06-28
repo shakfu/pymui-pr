@@ -1,4 +1,4 @@
-.phony: all build clean
+.phony: all build clean test
 
 all: build
 
@@ -10,3 +10,6 @@ build: clean
 
 clean:
 	@rm -rf build
+
+test:
+	@uv run pytest

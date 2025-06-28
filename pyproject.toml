@@ -3,9 +3,7 @@ name = "pymui"
 version = "0.1.0"
 description = "A cython wrapper for microui"
 readme = "README.md"
-authors = [
-    { name = "rxi", email = "rxi@rxi.github.io" },
-]
+authors = [{ name = "rxi", email = "rxi@rxi.github.io" }]
 requires-python = ">=3.13"
 dependencies = []
 
@@ -14,7 +12,11 @@ ninja.make-fallback = false
 
 [build-system]
 build-backend = "scikit_build_core.build"
-requires = [
-    "scikit-build-core",
-    "cython"
-]
+requires = ["scikit-build-core", "cython"]
+
+[dependency-groups]
+dev = ["pytest>=8.4.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
