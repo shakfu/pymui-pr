@@ -5,16 +5,19 @@ cdef extern from "microui.h":
     cdef const char* MU_VERSION
 
     # Size constants
-    DEF MU_COMMANDLIST_SIZE     = (256 * 1024)
-    DEF MU_ROOTLIST_SIZE        = 32
-    DEF MU_CONTAINERSTACK_SIZE  = 32
-    DEF MU_CLIPSTACK_SIZE       = 32
-    DEF MU_IDSTACK_SIZE         = 32
-    DEF MU_LAYOUTSTACK_SIZE     = 16
-    DEF MU_CONTAINERPOOL_SIZE   = 48
-    DEF MU_TREENODEPOOL_SIZE    = 48
-    DEF MU_MAX_WIDTHS           = 16
-    DEF MU_MAX_FMT              = 127
+    cdef const int MU_COMMANDLIST_SIZE      = (256 * 1024)
+    cdef const int MU_ROOTLIST_SIZE         = 32
+    cdef const int MU_CONTAINERSTACK_SIZE   = 32
+    cdef const int MU_CLIPSTACK_SIZE        = 32
+    cdef const int MU_IDSTACK_SIZE          = 32
+    cdef const int MU_LAYOUTSTACK_SIZE      = 16
+    cdef const int MU_CONTAINERPOOL_SIZE    = 48
+    cdef const int MU_TREENODEPOOL_SIZE     = 48
+    cdef const int MU_MAX_WIDTHS            = 16
+    cdef const int MU_MAX_FMT               = 127
+
+    cdef const char* MU_REAL_FMT
+    cdef const char* MU_SLIDER_FMT
     
     # Type definitions
     ctypedef float MU_REAL
@@ -57,36 +60,36 @@ cdef extern from "microui.h":
         MU_ICON_MAX
     
     cdef enum:
-        MU_RES_ACTIVE = (1 << 0)
-        MU_RES_SUBMIT = (1 << 1)
-        MU_RES_CHANGE = (1 << 2)
+        MU_RES_ACTIVE       = (1 << 0)
+        MU_RES_SUBMIT       = (1 << 1)
+        MU_RES_CHANGE       = (1 << 2)
     
     cdef enum:
-        MU_OPT_ALIGNCENTER = (1 << 0)
-        MU_OPT_ALIGNRIGHT = (1 << 1)
-        MU_OPT_NOINTERACT = (1 << 2)
-        MU_OPT_NOFRAME = (1 << 3)
-        MU_OPT_NORESIZE = (1 << 4)
-        MU_OPT_NOSCROLL = (1 << 5)
-        MU_OPT_NOCLOSE = (1 << 6)
-        MU_OPT_NOTITLE = (1 << 7)
-        MU_OPT_HOLDFOCUS = (1 << 8)
-        MU_OPT_AUTOSIZE = (1 << 9)
-        MU_OPT_POPUP = (1 << 10)
-        MU_OPT_CLOSED = (1 << 11)
-        MU_OPT_EXPANDED = (1 << 12)
+        MU_OPT_ALIGNCENTER  = (1 << 0)
+        MU_OPT_ALIGNRIGHT   = (1 << 1)
+        MU_OPT_NOINTERACT   = (1 << 2)
+        MU_OPT_NOFRAME      = (1 << 3)
+        MU_OPT_NORESIZE     = (1 << 4)
+        MU_OPT_NOSCROLL     = (1 << 5)
+        MU_OPT_NOCLOSE      = (1 << 6)
+        MU_OPT_NOTITLE      = (1 << 7)
+        MU_OPT_HOLDFOCUS    = (1 << 8)
+        MU_OPT_AUTOSIZE     = (1 << 9)
+        MU_OPT_POPUP        = (1 << 10)
+        MU_OPT_CLOSED       = (1 << 11)
+        MU_OPT_EXPANDED     = (1 << 12)
     
     cdef enum:
-        MU_MOUSE_LEFT = (1 << 0)
-        MU_MOUSE_RIGHT = (1 << 1)
-        MU_MOUSE_MIDDLE = (1 << 2)
+        MU_MOUSE_LEFT       = (1 << 0)
+        MU_MOUSE_RIGHT      = (1 << 1)
+        MU_MOUSE_MIDDLE     = (1 << 2)
     
     cdef enum:
-        MU_KEY_SHIFT = (1 << 0)
-        MU_KEY_CTRL = (1 << 1)
-        MU_KEY_ALT = (1 << 2)
-        MU_KEY_BACKSPACE = (1 << 3)
-        MU_KEY_RETURN = (1 << 4)
+        MU_KEY_SHIFT        = (1 << 0)
+        MU_KEY_CTRL         = (1 << 1)
+        MU_KEY_ALT          = (1 << 2)
+        MU_KEY_BACKSPACE    = (1 << 3)
+        MU_KEY_RETURN       = (1 << 4)
     
     # Forward declarations
     ctypedef struct mu_Context: pass
@@ -193,6 +196,32 @@ cdef extern from "microui.h":
         int thumb_size
         mu_Color colors[MU_COLOR_MAX]
     
+    # Stack structs
+    ctypedef struct command_list_stack:
+        int idx
+        char items[MU_COMMANDLIST_SIZE]
+
+    ctypedef struct root_list_stack:
+        int idx
+        mu_Container* items[MU_ROOTLIST_SIZE]
+
+    ctypedef struct container_list_stack:
+        int idx
+        mu_Container* items[MU_CONTAINERSTACK_SIZE]
+
+    ctypedef struct clip_list_stack:
+        int idx
+        mu_Rect items[MU_CLIPSTACK_SIZE]
+
+    ctypedef struct id_list_stack:
+        int idx
+        mu_Id items[MU_IDSTACK_SIZE]
+
+    ctypedef struct layout_list_stack:
+        int idx
+        mu_Layout items[MU_LAYOUTSTACK_SIZE]
+
+
     # Main Context struct
     ctypedef struct mu_Context:
         # callbacks
@@ -215,18 +244,12 @@ cdef extern from "microui.h":
         char number_edit_buf[MU_MAX_FMT]
         mu_Id number_edit
         # stacks (using macro-generated structs)
-        int command_list_idx
-        char command_list_items[MU_COMMANDLIST_SIZE]
-        int root_list_idx
-        mu_Container* root_list_items[MU_ROOTLIST_SIZE]
-        int container_stack_idx
-        mu_Container* container_stack_items[MU_CONTAINERSTACK_SIZE]
-        int clip_stack_idx
-        mu_Rect clip_stack_items[MU_CLIPSTACK_SIZE]
-        int id_stack_idx
-        mu_Id id_stack_items[MU_IDSTACK_SIZE]
-        int layout_stack_idx
-        mu_Layout layout_stack_items[MU_LAYOUTSTACK_SIZE]
+        command_list_stack command_list;
+        root_list_stack root_list;
+        container_list_stack container_stack;
+        clip_list_stack clip_stack;
+        id_list_stack id_stack;
+        layout_list_stack layout_stack;
         # retained state pools
         mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE]
         mu_Container containers[MU_CONTAINERPOOL_SIZE]
@@ -301,6 +324,16 @@ cdef extern from "microui.h":
     int mu_mouse_over(mu_Context* ctx, mu_Rect rect)
     void mu_update_control(mu_Context* ctx, mu_Id id, mu_Rect rect, int opt)
     
+    # Macro functions
+    int mu_button(mu_Context* ctx, const char* label)
+    int mu_textbox(mu_Context* ctx, char* buf, int bufsz)
+    int mu_slider(mu_Context* ctx, mu_Real* value, mu_Real lo, mu_Real hi)
+    int mu_number(mu_Context* ctx, mu_Real* value, mu_Real step)      
+    int mu_header(mu_Context* ctx, const char* label)            
+    void mu_begin_treenode(mu_Context* ctx, const char* label)    
+    void mu_begin_window(mu_Context* ctx, const char* title, mu_Rect rect)
+    void mu_begin_panel(mu_Context* ctx, const char* name)        
+
     # Widget functions
     void mu_text(mu_Context* ctx, const char* text)
     void mu_label(mu_Context* ctx, const char* text)
