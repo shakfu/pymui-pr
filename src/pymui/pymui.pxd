@@ -92,6 +92,10 @@ cdef extern from "microui.h":
         MU_KEY_RETURN       = (1 << 4)
     
     # Forward declarations
+
+    # DO NOT UNCOMMENT / CAUSES BUGS w/ mu_Context
+    # ctypedef struct mu_Context: pass
+ 
     ctypedef unsigned mu_Id
     ctypedef MU_REAL mu_Real
     ctypedef void* mu_Font
