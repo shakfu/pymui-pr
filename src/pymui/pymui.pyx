@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 from libc.stdlib cimport malloc, calloc, realloc, free
 from libc.string cimport memcpy, memset
 # import numpy as np
@@ -5,9 +7,19 @@ from libc.string cimport memcpy, memset
 
 cimport pymui
 
+
+
+# Fused types
+ctypedef fused number:
+    int
+    float
+
 # Version function
 def version() -> str:
     return MU_VERSION.decode()
+
+def clamp(number x, number a, number b) -> number:
+    return min(b, max(a, x))
 
 
 # Basic struct classes

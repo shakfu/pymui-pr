@@ -15,13 +15,12 @@ cdef extern from "microui.h":
     cdef const int MU_TREENODEPOOL_SIZE     = 48
     cdef const int MU_MAX_WIDTHS            = 16
     cdef const int MU_MAX_FMT               = 127
-
-    cdef const char* MU_REAL_FMT
-    cdef const char* MU_SLIDER_FMT
+    cdef const char* MU_REAL_FMT            = "%.3g"
+    cdef const char* MU_SLIDER_FMT          = "%.2f"
     
     # Type definitions
     ctypedef float MU_REAL
-    
+
     # Enums
     cdef enum:
         MU_CLIP_PART = 1
@@ -92,14 +91,11 @@ cdef extern from "microui.h":
         MU_KEY_RETURN       = (1 << 4)
     
     # Forward declarations
-
-    # DO NOT UNCOMMENT / CAUSES BUGS w/ mu_Context
-    # ctypedef struct mu_Context: pass
- 
+    ctypedef struct mu_Context
     ctypedef unsigned mu_Id
     ctypedef MU_REAL mu_Real
     ctypedef void* mu_Font
-    
+
     # Basic structs
     ctypedef struct mu_Vec2:
         int x
@@ -356,3 +352,42 @@ cdef extern from "microui.h":
     void mu_end_popup(mu_Context* ctx)
     void mu_begin_panel_ex(mu_Context* ctx, const char* name, int opt)
     void mu_end_panel(mu_Context* ctx)
+
+cdef extern from "renderer.h":
+    void r_init()
+    void r_draw_rect(mu_Rect rect, mu_Color color)
+    void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color)
+    void r_draw_icon(int id, mu_Rect rect, mu_Color color)
+    int  r_get_text_width(const char *text, int len)
+    int  r_get_text_height()
+    void r_set_clip_rect(mu_Rect rect)
+    void r_clear(mu_Color color)
+    void r_present()
+
+cdef extern from "SDL2/SDL.h":
+    cdef const int SDL_BUTTON_LEFT
+    cdef const int SDL_BUTTON_RIGHT
+    cdef const int SDL_BUTTON_MIDDLE
+
+    cdef const int SDLK_LSHIFT   
+    cdef const int SDLK_RSHIFT   
+    cdef const int SDLK_LCTRL    
+    cdef const int SDLK_RCTRL    
+    cdef const int SDLK_LALT     
+    cdef const int SDLK_RALT     
+    cdef const int SDLK_RETURN   
+    cdef const int SDLK_BACKSPACE
+
+    cdef void SDL_INIT_EVERYTHING()
+
+    cdef const int SDL_QUIT
+    cdef const int SDL_MOUSEMOTION
+    cdef const int SDL_MOUSEWHEEL
+    cdef const int SDL_TEXTINPUT
+    cdef const int SDL_MOUSEBUTTONDOWN
+    cdef const int SDL_MOUSEBUTTONUP
+    cdef const int SDL_KEYDOWN
+    cdef const int SDL_KEYUP
+
+
+
