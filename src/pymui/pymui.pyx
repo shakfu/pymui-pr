@@ -1,9 +1,6 @@
-from typing import TypeAlias
 
 from libc.stdlib cimport malloc, calloc, realloc, free
-from libc.string cimport memcpy, memset
-# import numpy as np
-# cimport numpy as np
+from libc.string cimport memcpy, memset, strlen
 
 cimport pymui
 
@@ -169,7 +166,7 @@ cdef class Color:
 
 cdef class Style:
     cdef mu_Style* ptr
-    cdef bint _owner
+    cdef bint owner
 
     def __cinit__(self):
         self.ptr = NULL
@@ -277,6 +274,16 @@ cdef class Style:
             raise IndexError("Color index out of range")
 
 
+cdef int text_width(mu_Font font, const char *text, int len) noexcept:
+    if len == -1:
+        len = strlen(text)
+    return r_get_text_width(text, len)
+
+cdef int text_height(mu_Font font) noexcept:
+    return r_get_text_height()
+
+
+
 # Main Context class
 cdef class Context:
     cdef mu_Context* ptr
@@ -297,6 +304,8 @@ cdef class Context:
         if self.ptr is NULL:
             raise MemoryError("Failed to allocate Context")
         mu_init(self.ptr)
+        self.ptr.text_width = text_width
+        self.ptr.text_height = text_height
         self.owner = True
 
     @staticmethod
