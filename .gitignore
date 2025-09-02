@@ -25,3 +25,7 @@ sdist/
 .*_cache/
 *.egg-info
 .ropeproject
+
+# claude
+.claude
+CLAUDE.md

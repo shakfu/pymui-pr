@@ -302,18 +302,18 @@ def test_demo():
         traceback.print_exc()
         assert False
 
-# def main():
-#     """Main entry point"""
-#     try:
-#         demo = Demo()
-#         demo.run()
-#     except Exception as e:
-#         print(f"Error: {e}")
-#         import traceback
-#         traceback.print_exc()
-#         return 1
+def main():
+    """Main entry point"""
+    try:
+        demo = Demo()
+        demo.run()
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
     
-#     return 0
+    return 0
 
 
 if __name__ == "__main__":
