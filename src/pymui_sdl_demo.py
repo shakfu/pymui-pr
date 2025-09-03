@@ -8,6 +8,7 @@ import sys
 import ctypes
 import sdl2
 import sdl2.ext
+import pymui
 from pymui import Context, Rect, Color, Vec2, Option, Result, Mouse, Key, ColorIndex
 
 
@@ -19,8 +20,8 @@ class SDLRenderer:
         self.height = height
         self.window = None
         self.renderer = None
-        self.font_width = 8
-        self.font_height = 12
+        self.font_width = 6  # 5 pixels + 1 spacing
+        self.font_height = 8  # 7 pixels + 1 spacing
         
         # Initialize SDL
         if sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO) != 0:
@@ -62,10 +63,120 @@ class SDLRenderer:
         sdl2.SDL_SetRenderDrawColor(self.renderer, color.r, color.g, color.b, color.a)
         sdl2.SDL_RenderFillRect(self.renderer, sdl_rect)
     
+    def draw_char_pattern(self, x, y, char, color):
+        """Draw a simple pixel pattern for a character"""
+        sdl2.SDL_SetRenderDrawColor(self.renderer, color.r, color.g, color.b, color.a)
+        
+        # Simple 5x7 bitmap patterns for common characters
+        patterns = {
+            ' ': [],  # Space character (empty)
+            '0': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '1': [(2,0),(1,1),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6),(2,6),(3,6)],
+            '2': [(1,0),(2,0),(3,0),(0,1),(4,1),(4,2),(3,3),(2,4),(1,5),(0,6),(1,6),(2,6),(3,6),(4,6)],
+            '3': [(1,0),(2,0),(3,0),(4,1),(2,2),(3,2),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            '4': [(0,0),(3,0),(0,1),(3,1),(0,2),(3,2),(0,3),(1,3),(2,3),(3,3),(4,3),(3,4),(3,5),(3,6)],
+            '5': [(0,0),(1,0),(2,0),(3,0),(4,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            '6': [(1,0),(2,0),(3,0),(0,1),(0,2),(0,3),(1,3),(2,3),(3,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '7': [(0,0),(1,0),(2,0),(3,0),(4,0),(4,1),(3,2),(2,3),(1,4),(1,5),(1,6)],
+            '8': [(1,0),(2,0),(3,0),(0,1),(4,1),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '9': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(1,3),(2,3),(3,3),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            '.': [(2,5),(2,6)],
+            ',': [(2,5),(1,6),(2,6)],
+            ':': [(2,2),(2,5)],
+            ';': [(2,2),(2,5),(1,6)],
+            '!': [(2,0),(2,1),(2,2),(2,3),(2,4),(2,6)],
+            '?': [(1,0),(2,0),(3,0),(4,1),(4,2),(3,3),(2,4),(2,6)],
+            '-': [(1,3),(2,3),(3,3)],
+            '+': [(2,1),(1,2),(2,2),(3,2),(2,3)],
+            '=': [(1,2),(2,2),(3,2),(1,4),(2,4),(3,4)],
+            '(': [(3,0),(2,1),(2,2),(2,3),(2,4),(2,5),(3,6)],
+            ')': [(1,0),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6)],
+            '[': [(2,0),(3,0),(2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(3,6)],
+            ']': [(1,0),(2,0),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6),(2,6)],
+            '/': [(4,0),(3,1),(2,2),(1,3),(0,4)],
+            '\\\\': [(0,0),(1,1),(2,2),(3,3),(4,4)],
+            '#': [(1,0),(3,0),(0,1),(1,1),(2,1),(3,1),(4,1),(1,2),(3,2),(0,3),(1,3),(2,3),(3,3),(4,3),(1,4),(3,4)],
+            'A': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(1,2),(2,2),(3,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'B': [(0,0),(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(1,4),(2,4),(3,4),(0,5),(0,6)],
+            'C': [(1,0),(2,0),(3,0),(0,1),(0,2),(0,3),(0,4),(0,5),(1,6),(2,6),(3,6)],
+            'D': [(0,0),(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(1,6),(2,6),(3,6)],
+            'E': [(0,0),(1,0),(2,0),(3,0),(4,0),(0,1),(0,2),(1,2),(2,2),(0,3),(0,4),(0,5),(0,6),(1,6),(2,6),(3,6),(4,6)],
+            'F': [(0,0),(1,0),(2,0),(3,0),(4,0),(0,1),(0,2),(1,2),(2,2),(0,3),(0,4),(0,5),(0,6)],
+            'G': [(1,0),(2,0),(3,0),(0,1),(0,2),(0,3),(2,3),(3,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'H': [(0,0),(4,0),(0,1),(4,1),(0,2),(4,2),(0,3),(1,3),(2,3),(3,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'I': [(1,0),(2,0),(3,0),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6),(2,6),(3,6)],
+            'L': [(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(1,6),(2,6),(3,6),(4,6)],
+            'M': [(0,0),(4,0),(0,1),(1,1),(3,1),(4,1),(0,2),(2,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'N': [(0,0),(4,0),(0,1),(1,1),(4,1),(0,2),(2,2),(4,2),(0,3),(3,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'O': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'P': [(0,0),(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(1,3),(2,3),(3,3),(0,4),(0,5),(0,6)],
+            'R': [(0,0),(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(1,3),(2,3),(3,3),(0,4),(3,4),(0,5),(4,5),(0,6),(4,6)],
+            'S': [(1,0),(2,0),(3,0),(4,0),(0,1),(0,2),(1,3),(2,3),(3,3),(4,4),(4,5),(0,6),(1,6),(2,6),(3,6)],
+            'T': [(0,0),(1,0),(2,0),(3,0),(4,0),(2,1),(2,2),(2,3),(2,4),(2,5),(2,6)],
+            'U': [(0,0),(4,0),(0,1),(4,1),(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'W': [(0,0),(4,0),(0,1),(4,1),(0,2),(4,2),(0,3),(2,3),(4,3),(0,4),(1,4),(3,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'a': [(1,2),(2,2),(3,2),(4,3),(1,4),(2,4),(3,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'b': [(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(1,6),(2,6),(3,6)],
+            'c': [(1,2),(2,2),(3,2),(0,3),(0,4),(0,5),(1,6),(2,6),(3,6)],
+            'd': [(4,0),(4,1),(1,2),(2,2),(3,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6),(4,6)],
+            'e': [(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(1,4),(2,4),(3,4),(0,5),(1,6),(2,6),(3,6)],
+            'f': [(2,0),(3,0),(1,1),(1,2),(2,2),(3,2),(4,2),(1,3),(1,4),(1,5),(1,6)],
+            'g': [(1,2),(2,2),(3,2),(4,2),(0,3),(4,3),(0,4),(4,4),(1,5),(2,5),(3,5),(4,5),(4,6),(0,7),(1,7),(2,7),(3,7)],
+            'h': [(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'i': [(2,0),(2,2),(2,3),(2,4),(2,5),(2,6)],
+            'j': [(3,0),(3,2),(3,3),(3,4),(3,5),(3,6),(2,7),(1,7)],
+            'k': [(0,0),(0,1),(0,2),(0,3),(3,3),(0,4),(1,4),(2,4),(0,5),(3,5),(0,6),(4,6)],
+            'l': [(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(1,6),(2,6)],
+            'm': [(0,2),(2,2),(4,2),(0,3),(1,3),(3,3),(4,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'n': [(0,2),(1,2),(2,2),(0,3),(3,3),(0,4),(4,4),(0,5),(4,5),(0,6),(4,6)],
+            'o': [(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'p': [(0,2),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(1,5),(2,5),(3,5),(0,6),(0,7)],
+            'q': [(1,2),(2,2),(3,2),(4,2),(0,3),(4,3),(0,4),(4,4),(1,5),(2,5),(3,5),(4,5),(4,6),(4,7)],
+            'r': [(0,2),(1,2),(2,2),(0,3),(3,3),(0,4),(1,4),(2,4),(0,5),(0,6)],
+            's': [(1,2),(2,2),(3,2),(0,3),(1,4),(2,4),(4,5),(1,6),(2,6),(3,6)],
+            't': [(1,0),(1,1),(0,2),(1,2),(2,2),(3,2),(1,3),(1,4),(1,5),(2,6),(3,6)],
+            'u': [(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            'v': [(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(1,5),(3,5),(2,6)],
+            'w': [(0,2),(4,2),(0,3),(4,3),(0,4),(2,4),(4,4),(0,5),(1,5),(3,5),(4,5),(1,6),(3,6)],
+            'x': [(0,2),(4,2),(1,3),(3,3),(2,4),(1,5),(3,5),(0,6),(4,6)],
+            'y': [(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(1,5),(2,5),(3,5),(4,5),(4,6),(0,7),(1,7),(2,7),(3,7)],
+            'z': [(0,2),(1,2),(2,2),(3,2),(4,2),(3,3),(2,4),(1,5),(0,6),(1,6),(2,6),(3,6),(4,6)],
+            '0': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '1': [(2,0),(1,1),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6),(2,6),(3,6)],
+            '2': [(1,0),(2,0),(3,0),(0,1),(4,1),(4,2),(3,3),(2,4),(1,5),(0,6),(1,6),(2,6),(3,6),(4,6)],
+            '3': [(1,0),(2,0),(3,0),(4,1),(2,2),(3,2),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            '4': [(0,0),(0,1),(0,2),(0,3),(1,3),(2,3),(3,3),(4,3),(4,0),(4,1),(4,2),(4,4),(4,5),(4,6)],
+            '5': [(0,0),(1,0),(2,0),(3,0),(4,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            '6': [(1,0),(2,0),(3,0),(0,1),(0,2),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '7': [(0,0),(1,0),(2,0),(3,0),(4,0),(4,1),(3,2),(3,3),(2,4),(2,5),(2,6)],
+            '8': [(1,0),(2,0),(3,0),(0,1),(4,1),(1,2),(2,2),(3,2),(0,3),(4,3),(0,4),(4,4),(0,5),(4,5),(1,6),(2,6),(3,6)],
+            '9': [(1,0),(2,0),(3,0),(0,1),(4,1),(0,2),(4,2),(1,3),(2,3),(3,3),(4,3),(4,4),(4,5),(1,6),(2,6),(3,6)],
+            ' ': [],
+            ':': [(2,1),(2,2),(2,4),(2,5)],
+            '.': [(2,5),(2,6)],
+            ',': [(2,5),(1,6)],
+            '!': [(2,0),(2,1),(2,2),(2,3),(2,4),(2,6)],
+            '?': [(1,0),(2,0),(3,0),(0,1),(4,1),(4,2),(3,3),(2,4),(2,6)],
+            '-': [(1,3),(2,3),(3,3)],
+            '_': [(0,6),(1,6),(2,6),(3,6),(4,6)],
+            '(': [(3,0),(2,1),(2,2),(2,3),(2,4),(2,5),(3,6)],
+            ')': [(1,0),(2,1),(2,2),(2,3),(2,4),(2,5),(1,6)],
+            '/': [(4,0),(3,1),(3,2),(2,3),(2,4),(1,5),(0,6)],
+            '\\': [(0,0),(1,1),(1,2),(2,3),(2,4),(3,5),(4,6)],
+        }
+        
+        # Default pattern for unknown characters (small square)
+        pattern = patterns.get(char, [(1,2),(2,2),(1,3),(2,3)])
+        
+        for px, py in pattern:
+            if px < 8 and py < 12:  # Stay within font bounds
+                point_rect = sdl2.SDL_Rect(x + px, y + py, 1, 1)
+                sdl2.SDL_RenderFillRect(self.renderer, point_rect)
+
     def draw_text(self, text, pos, color):
-        """Draw text (simplified bitmap font simulation)"""
-        # Simple text rendering - draw rectangles for characters
+        """Draw text using bitmap patterns"""
         x, y = pos.x, pos.y
+        
         for char in text:
             if char == ' ':
                 x += self.font_width
@@ -75,10 +186,7 @@ class SDLRenderer:
                 y += self.font_height
                 continue
             
-            # Draw character as a small filled rectangle
-            char_rect = sdl2.SDL_Rect(x, y, self.font_width - 1, self.font_height - 1)
-            sdl2.SDL_SetRenderDrawColor(self.renderer, color.r, color.g, color.b, color.a)
-            sdl2.SDL_RenderFillRect(self.renderer, char_rect)
+            self.draw_char_pattern(x, y, char, color)
             x += self.font_width
     
     def draw_icon(self, icon_id, rect, color):
@@ -92,6 +200,10 @@ class SDLRenderer:
         """Set clipping rectangle"""
         sdl_rect = sdl2.SDL_Rect(rect.x, rect.y, rect.w, rect.h)
         sdl2.SDL_RenderSetClipRect(self.renderer, sdl_rect)
+    
+    def reset_clip_rect(self):
+        """Reset clipping rectangle to full screen"""
+        sdl2.SDL_RenderSetClipRect(self.renderer, None)
     
     def get_text_width(self, text, length=-1):
         """Get text width in pixels"""
@@ -171,9 +283,9 @@ class PyMUIDemo:
     
     def uint8_slider(self, value, low, high):
         """Custom uint8 slider (matching C version)"""
-        # Simplified version of the C uint8_slider function
-        result = self.ctx.slider(float(value), float(low), float(high))
-        return int(result), (result != value)
+        # Slider now returns (result_code, new_value) tuple
+        result_code, new_value = self.ctx.slider(float(value), float(low), float(high))
+        return int(new_value), (new_value != value)
     
     def test_window(self):
         """Main demo window (adapted for pymui API)"""
@@ -181,32 +293,24 @@ class PyMUIDemo:
             
             # Window info section
             if self.ctx.header("Window Info"):
-                self.ctx.layout_width(54)
+                self.ctx.layout_row([54, -1], 0)
                 self.ctx.label("Position:")
-                self.ctx.layout_width(-1)
                 self.ctx.label("40, 40")
-                self.ctx.layout_width(54)
                 self.ctx.label("Size:")
-                self.ctx.layout_width(-1)
                 self.ctx.label("300, 450")
             
             # Test buttons section
             if self.ctx.header("Test Buttons", Option.EXPANDED):
-                self.ctx.layout_width(86)
+                self.ctx.layout_row([86, -110, -1], 0)
                 self.ctx.label("Test buttons 1:")
-                self.ctx.layout_width(-110)
                 if self.ctx.button("Button 1"):
                     self.write_log("Pressed button 1")
-                self.ctx.layout_width(-1)
                 if self.ctx.button("Button 2"):
                     self.write_log("Pressed button 2")
                 
-                self.ctx.layout_width(86)
                 self.ctx.label("Test buttons 2:")
-                self.ctx.layout_width(-110)
                 if self.ctx.button("Button 3"):
                     self.write_log("Pressed button 3")
-                self.ctx.layout_width(-1)
                 if self.ctx.button("Popup"):
                     self.ctx.open_popup("Test Popup")
                 
@@ -217,8 +321,8 @@ class PyMUIDemo:
             
             # Tree and Text section
             if self.ctx.header("Tree and Text", Option.EXPANDED):
+                self.ctx.layout_row([140, -1], 0)
                 self.ctx.layout_begin_column()
-                self.ctx.layout_width(140)
                 
                 # Tree section
                 if self.ctx.begin_treenode("Test 1"):
@@ -235,32 +339,29 @@ class PyMUIDemo:
                     self.ctx.end_treenode()
                 
                 if self.ctx.begin_treenode("Test 2"):
-                    self.ctx.layout_width(54)
+                    self.ctx.layout_row([54, 54], 0)
                     if self.ctx.button("Button 3"):
                         self.write_log("Pressed button 3")
-                    self.ctx.layout_width(54)
                     if self.ctx.button("Button 4"):
                         self.write_log("Pressed button 4")
-                    self.ctx.layout_width(54)
                     if self.ctx.button("Button 5"):
                         self.write_log("Pressed button 5")
-                    self.ctx.layout_width(54)
                     if self.ctx.button("Button 6"):
                         self.write_log("Pressed button 6")
                     self.ctx.end_treenode()
                 
                 if self.ctx.begin_treenode("Test 3"):
                     # Handle checkboxes with proper state management
-                    self.checks[0] = self.ctx.checkbox("Checkbox 1", self.checks[0])
-                    self.checks[1] = self.ctx.checkbox("Checkbox 2", self.checks[1])
-                    self.checks[2] = self.ctx.checkbox("Checkbox 3", self.checks[2])
+                    _, self.checks[0] = self.ctx.checkbox("Checkbox 1", self.checks[0])
+                    _, self.checks[1] = self.ctx.checkbox("Checkbox 2", self.checks[1])
+                    _, self.checks[2] = self.ctx.checkbox("Checkbox 3", self.checks[2])
                     self.ctx.end_treenode()
                 
                 self.ctx.layout_end_column()
                 
-                # Text section
+                # Text section  
                 self.ctx.layout_begin_column()
-                self.ctx.layout_width(-1)
+                self.ctx.layout_row([-1], 0)
                 self.ctx.text("Lorem ipsum dolor sit amet, consectetur adipiscing "
                             "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
                             "ipsum, eu varius magna felis a nulla.")
@@ -268,22 +369,17 @@ class PyMUIDemo:
             
             # Background color sliders section
             if self.ctx.header("Background Color", Option.EXPANDED):
+                self.ctx.layout_row([-78, -1], 74)
+                
                 # Sliders column
                 self.ctx.layout_begin_column()
-                self.ctx.layout_width(46)
+                self.ctx.layout_row([46, -1], 0)
                 self.ctx.label("Red:")
-                self.ctx.layout_width(-1)
-                self.bg[0] = self.ctx.slider(self.bg[0], 0, 255)
-                
-                self.ctx.layout_width(46)
+                _, self.bg[0] = self.ctx.slider(self.bg[0], 0, 255)
                 self.ctx.label("Green:")
-                self.ctx.layout_width(-1)
-                self.bg[1] = self.ctx.slider(self.bg[1], 0, 255)
-                
-                self.ctx.layout_width(46)
+                _, self.bg[1] = self.ctx.slider(self.bg[1], 0, 255)
                 self.ctx.label("Blue:")
-                self.ctx.layout_width(-1)
-                self.bg[2] = self.ctx.slider(self.bg[2], 0, 255)
+                _, self.bg[2] = self.ctx.slider(self.bg[2], 0, 255)
                 self.ctx.layout_end_column()
                 
                 # Color preview
@@ -301,9 +397,9 @@ class PyMUIDemo:
         """Log window (adapted for pymui API)"""
         if self.ctx.begin_window("Log Window", Rect(350, 40, 300, 200)):
             # Output text panel
-            self.ctx.layout_height(-25)
+            self.ctx.layout_row([-1], -25)
             self.ctx.begin_panel("Log Output")
-            self.ctx.layout_height(-1)
+            self.ctx.layout_row([-1], -1)
             self.ctx.text(self.logbuf)
             self.ctx.end_panel()
             
@@ -313,14 +409,13 @@ class PyMUIDemo:
             
             # Input textbox + submit button
             submitted = False
-            self.ctx.layout_width(-70)
+            self.ctx.layout_row([-70, -1], 0)
             
             # Handle textbox input
             result = self.ctx.textbox(self.input_buf, 128)
             if result & Result.SUBMIT:
                 submitted = True
             
-            self.ctx.layout_width(-1)
             if self.ctx.button("Submit"):
                 submitted = True
             
@@ -352,22 +447,18 @@ class PyMUIDemo:
         if self.ctx.begin_window("Style Editor", Rect(350, 250, 300, 240)):
             # Calculate slider width (simplified)
             sw = 40  # Fixed width since we can't access container body width
+            self.ctx.layout_row([80, sw, sw, sw, sw, -1], 0)
             
             for label, color_idx in colors:
-                self.ctx.layout_width(80)
                 self.ctx.label(label)
                 
                 # Get current color
                 color = self.ctx.style.get_color(color_idx)
                 
                 # RGBA sliders
-                self.ctx.layout_width(sw)
                 new_r, _ = self.uint8_slider(color.r, 0, 255)
-                self.ctx.layout_width(sw)
-                new_g, _ = self.uint8_slider(color.g, 0, 255)
-                self.ctx.layout_width(sw) 
+                new_g, _ = self.uint8_slider(color.g, 0, 255) 
                 new_b, _ = self.uint8_slider(color.b, 0, 255)
-                self.ctx.layout_width(sw)
                 new_a, _ = self.uint8_slider(color.a, 0, 255)
                 
                 # Update color if changed
@@ -377,7 +468,6 @@ class PyMUIDemo:
                     self.ctx.style.set_color(color_idx, new_color)
                 
                 # Draw color preview
-                self.ctx.layout_width(-1)
                 self.ctx.draw_rect(self.ctx.layout_next(), new_color)
             
             self.ctx.end_window()
@@ -436,30 +526,25 @@ class PyMUIDemo:
         # Process UI frame
         self.process_frame()
         
-        # Render microui commands
-        cmd = None
+        # Render microui commands using the new command processing
         while True:
-            try:
-                cmd = self.ctx.next_command()
-                if not cmd:
-                    break
-                
-                # Handle different command types
-                if hasattr(cmd, 'type'):
-                    if cmd.type == 'TEXT':
-                        self.renderer.draw_text(cmd.text, cmd.pos, cmd.color)
-                    elif cmd.type == 'RECT':
-                        self.renderer.draw_rect(cmd.rect, cmd.color)
-                    elif cmd.type == 'ICON':
-                        self.renderer.draw_icon(cmd.icon_id, cmd.rect, cmd.color)
-                    elif cmd.type == 'CLIP':
-                        self.renderer.set_clip_rect(cmd.rect)
-                        
-            except StopIteration:
+            cmd = self.ctx.next_command()
+            if cmd is None:
                 break
-            except AttributeError:
-                # Command iteration may not be fully implemented in pymui
-                break
+            
+            # Handle different command types using the command constants
+            if cmd.type == pymui.Command.RECT:
+                self.renderer.draw_rect(cmd.rect, cmd.color)
+            elif cmd.type == pymui.Command.TEXT:
+                self.renderer.draw_text(cmd.text, cmd.pos, cmd.color)
+            elif cmd.type == pymui.Command.ICON:
+                self.renderer.draw_icon(cmd.icon_id, cmd.rect, cmd.color)
+            elif cmd.type == pymui.Command.CLIP:
+                self.renderer.set_clip_rect(cmd.rect)
+            # JUMP commands are handled internally by microui
+        
+        # Reset clipping to prevent issues in next frame
+        self.renderer.reset_clip_rect()
         
         # Present the rendered frame
         self.renderer.present()
