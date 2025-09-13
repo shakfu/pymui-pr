@@ -1000,17 +1000,17 @@ def renderer_draw_rect(Rect rect, Color color):
     """Draw a rectangle"""
     r_draw_rect(rect.to_c(), color.to_c())
 
-def renderer_draw_text(bytes text, Vec2 pos, Color color):
+def renderer_draw_text(str text, Vec2 pos, Color color):
     """Draw text"""
-    r_draw_text(text, pos.to_c(), color.to_c())
+    r_draw_text(text.encode(), pos.to_c(), color.to_c())
 
 def renderer_draw_icon(int icon_id, Rect rect, Color color):
     """Draw an icon"""
     r_draw_icon(icon_id, rect.to_c(), color.to_c())
 
-def renderer_get_text_width(bytes text, int length):
+def renderer_get_text_width(str text, int length):
     """Get text width"""
-    return r_get_text_width(text, length)
+    return r_get_text_width(text.encode(), length)
 
 def renderer_get_text_height():
     """Get text height"""

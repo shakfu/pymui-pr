@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
 import sys
+from pathlib import Path
 import ctypes
 import sdl2
 import sdl2.ext
+
+ROOTDIR = Path(__file__).parent.parent / "src"
 
 try:
     from pymui import pymui
 except ImportError:
     # Handle imports when running in development
-    sys.path.insert(0, '/Users/sa/projects/pymui/src')
+    sys.path.insert(0, str(ROOTDIR))
     from pymui import pymui
 
 
@@ -293,9 +296,9 @@ def main():
         # Main loop
         running = True
         while running:
-            # Handle SDL events
-            events = sdl2.ext.get_events()
-            for event in events:
+            # Handle SDL events - use direct SDL_PollEvent like C version
+            event = sdl2.SDL_Event()
+            while sdl2.SDL_PollEvent(ctypes.byref(event)):
                 if event.type == sdl2.SDL_QUIT:
                     running = False
                 elif event.type == sdl2.SDL_MOUSEMOTION:
@@ -303,7 +306,13 @@ def main():
                 elif event.type == sdl2.SDL_MOUSEWHEEL:
                     ctx.input_scroll(0, event.wheel.y * -30)
                 elif event.type == sdl2.SDL_TEXTINPUT:
-                    text = event.text.text.decode('utf-8', errors='replace')
+                    # Convert bytes to string properly
+                    text_bytes = event.text.text
+                    # Find null terminator
+                    null_pos = text_bytes.find(b'\x00')
+                    if null_pos >= 0:
+                        text_bytes = text_bytes[:null_pos]
+                    text = text_bytes.decode('utf-8', errors='replace')
                     ctx.input_text(text)
                 elif event.type in (sdl2.SDL_MOUSEBUTTONDOWN, sdl2.SDL_MOUSEBUTTONUP):
                     btn = button_map.get(event.button.button)
@@ -334,7 +343,7 @@ def main():
                     break
 
                 if cmd.type == pymui.Command.TEXT:
-                    pymui.renderer_draw_text(cmd.text.encode('utf-8'), cmd.pos, cmd.color)
+                    pymui.renderer_draw_text(cmd.text, cmd.pos, cmd.color)
                 elif cmd.type == pymui.Command.RECT:
                     pymui.renderer_draw_rect(cmd.rect, cmd.color)
                 elif cmd.type == pymui.Command.ICON:

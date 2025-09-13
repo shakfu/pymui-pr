@@ -14,7 +14,7 @@ clean:
 	@find . -type d -path ".*_cache"  -exec rm -rf {} \; -prune
 
 demo:
-	@uv run tests/pymui_sdl_demo.py
+	@uv run python tests/pymui_sdl_demo.py
 
 
 test:
