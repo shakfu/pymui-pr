@@ -990,3 +990,41 @@ class Key:
     BACKSPACE = MU_KEY_BACKSPACE
     RETURN = MU_KEY_RETURN
 
+
+# Renderer functions exposed as module-level functions
+def renderer_init():
+    """Initialize the renderer"""
+    r_init()
+
+def renderer_draw_rect(Rect rect, Color color):
+    """Draw a rectangle"""
+    r_draw_rect(rect.to_c(), color.to_c())
+
+def renderer_draw_text(bytes text, Vec2 pos, Color color):
+    """Draw text"""
+    r_draw_text(text, pos.to_c(), color.to_c())
+
+def renderer_draw_icon(int icon_id, Rect rect, Color color):
+    """Draw an icon"""
+    r_draw_icon(icon_id, rect.to_c(), color.to_c())
+
+def renderer_get_text_width(bytes text, int length):
+    """Get text width"""
+    return r_get_text_width(text, length)
+
+def renderer_get_text_height():
+    """Get text height"""
+    return r_get_text_height()
+
+def renderer_set_clip_rect(Rect rect):
+    """Set clipping rectangle"""
+    r_set_clip_rect(rect.to_c())
+
+def renderer_clear(Color color):
+    """Clear the screen"""
+    r_clear(color.to_c())
+
+def renderer_present():
+    """Present the rendered frame"""
+    r_present()
+
