@@ -4,11 +4,14 @@ import sys
 import sdl2
 import sdl2.ext
 import ctypes
+from pathlib import Path
+
+ROOTDIR = Path(__file__).parent.parent / "src"
 
 try:
     from pymui import pymui
 except ImportError:
-    sys.path.insert(0, '/Users/sa/projects/pymui/src')
+    sys.path.insert(0, str(ROOTDIR))
     from pymui import pymui
 
 
