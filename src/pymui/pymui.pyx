@@ -702,7 +702,7 @@ cdef class Context:
         if self.current_command.type == MU_COMMAND_RECT:
             return RectCommand.from_c(self.current_command.rect)
         elif self.current_command.type == MU_COMMAND_TEXT:
-            return TextCommand.from_c(self.current_command.text)
+            return TextCommand.from_ptr(&self.current_command.text)
         elif self.current_command.type == MU_COMMAND_ICON:
             return IconCommand.from_c(self.current_command.icon)
         elif self.current_command.type == MU_COMMAND_CLIP:
@@ -821,10 +821,16 @@ cdef class RectCommand:
 
 
 cdef class TextCommand:
-    cdef mu_TextCommand _cmd
+    cdef mu_TextCommand* _cmd
     
     @staticmethod
     cdef TextCommand from_c(mu_TextCommand cmd):
+        cdef TextCommand result = TextCommand.__new__(TextCommand)
+        # This won't work with flexible array members, use from_ptr instead
+        raise NotImplementedError("Use from_ptr for TextCommand with flexible array members")
+    
+    @staticmethod
+    cdef TextCommand from_ptr(mu_TextCommand* cmd):
         cdef TextCommand result = TextCommand.__new__(TextCommand)
         result._cmd = cmd
         return result
@@ -848,16 +854,23 @@ cdef class TextCommand:
     @property
     def text(self) -> str:
         cdef const char* str_ptr
+        cdef int length
+        cdef bytes py_bytes
         
-        # Simple and safe approach - let Python handle the C string
+        # Get the string pointer from the flexible array member
+        # The str field is a flexible array member that points to the actual string data
+        str_ptr = self._cmd.str
+        if str_ptr == NULL:
+            return ""
+        
+        # Convert C string to Python string
         try:
-            # Convert to bytes first, then decode to string
-            str_ptr = self._cmd.str
-            if str_ptr == NULL:
+            # Use strlen to get the proper length
+            length = strlen(str_ptr)
+            if length == 0:
                 return ""
-            
-            # Use Python's built-in C string handling
-            py_bytes = str_ptr
+            # Create a bytes object from the C string
+            py_bytes = str_ptr[:length]
             return py_bytes.decode('utf-8', errors='replace')
         except Exception:
             return ""
