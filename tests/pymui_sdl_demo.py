@@ -288,11 +288,10 @@ def style_window(ctx):
 
 def process_frame(ctx):
     """Process one frame of UI"""
-    ctx.begin()
-    style_window(ctx)
-    log_window(ctx)
-    test_window(ctx)
-    ctx.end()
+    with ctx:  # Context manager handles begin/end automatically
+        style_window(ctx)
+        log_window(ctx)
+        test_window(ctx)
 
 
 # SDL button mapping

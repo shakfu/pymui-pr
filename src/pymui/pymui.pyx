@@ -450,7 +450,11 @@ cdef class Context:
     The Context follows an immediate-mode paradigm where UI elements
     are created and processed each frame rather than being persistent objects.
 
-    Example:
+    The Context supports Python's context manager protocol, allowing automatic
+    frame management with the 'with' statement.
+
+    Examples:
+        Manual frame management:
         >>> ctx = Context()
         >>> ctx.begin()
         >>> if ctx.begin_window("My Window", rect(10, 10, 200, 150)):
@@ -458,9 +462,18 @@ cdef class Context:
         ...     ctx.end_window()
         >>> ctx.end()
 
+        Automatic frame management (recommended):
+        >>> with Context() as ctx:
+        ...     if ctx.begin_window("My Window", rect(10, 10, 200, 150)):
+        ...         ctx.label("Hello, World!")
+        ...         ctx.end_window()
+
     Note:
-        Always call begin() at the start of each frame and end() at the end.
-        Remember to call end_window() for every begin_window() that returns True.
+        When using manual frame management, always call begin() at the start
+        of each frame and end() at the end. When using the context manager,
+        begin() and end() are called automatically.
+
+        Always remember to call end_window() for every begin_window() that returns True.
     """
     cdef mu_Context* ptr
     cdef bint owner
@@ -542,7 +555,41 @@ cdef class Context:
             Always pair this with a call to begin() at the start of the frame.
         """
         mu_end(self.ptr)
-    
+
+    def __enter__(self):
+        """Enter the context manager - automatically calls begin().
+
+        This allows using the Context with Python's 'with' statement:
+
+        Example:
+            >>> with pymui.Context() as ctx:
+            ...     if ctx.begin_window("Window", pymui.rect(10, 10, 200, 150)):
+            ...         ctx.label("Hello, World!")
+            ...         ctx.end_window()
+
+        Returns:
+            Context: Returns self to allow method chaining
+        """
+        self.begin()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the context manager - automatically calls end().
+
+        This ensures that end() is always called even if an exception occurs
+        within the context manager block.
+
+        Args:
+            exc_type: Exception type (if any)
+            exc_val: Exception value (if any)
+            exc_tb: Exception traceback (if any)
+
+        Returns:
+            None: Does not suppress exceptions
+        """
+        self.end()
+        return None
+
     def set_focus(self, unsigned int id):
         """Set the focused widget.
 

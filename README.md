@@ -40,28 +40,30 @@ pip install .
 ```python
 import pymui
 
-# Create a UI context
+# Recommended: Use context manager (automatically calls begin/end)
+with pymui.Context() as ctx:
+    # Create a window
+    if ctx.begin_window("My Window", pymui.Rect(10, 10, 200, 150)):
+        # Create a button
+        if ctx.button("Click me!"):
+            print("Button was clicked!")
+
+        # Create a checkbox
+        result, checked = ctx.checkbox("Enable feature", True)
+
+        # Create a slider
+        result, value = ctx.slider(50.0, 0.0, 100.0)
+
+        ctx.end_window()
+
+# Alternative: Manual frame management
 ctx = pymui.Context()
-
-# Begin frame
 ctx.begin()
-
-# Create a window
-if ctx.begin_window("My Window", pymui.Rect(10, 10, 200, 150)):
-    # Create a button
-    if ctx.button("Click me!"):
-        print("Button was clicked!")
-
-    # Create a checkbox
-    result, checked = ctx.checkbox("Enable feature", True)
-
-    # Create a slider
-    result, value = ctx.slider(50.0, 0.0, 100.0)
-
-    ctx.end_window()
-
-# End frame
-ctx.end()
+try:
+    # UI code here...
+    pass
+finally:
+    ctx.end()
 ```
 
 ## Core Concepts
@@ -73,14 +75,79 @@ PyMUI follows the immediate-mode paradigm where UI elements are created and proc
 ```python
 # No widget objects to manage - just call functions each frame
 for frame in main_loop():
-    ctx.begin()
+    with pymui.Context() as ctx:  # Automatic begin/end
+        # UI is rebuilt each frame
+        if ctx.button("Dynamic Button"):
+            handle_click()
 
-    # UI is rebuilt each frame
-    if ctx.button("Dynamic Button"):
-        handle_click()
-
-    ctx.end()
     render_frame(ctx)
+```
+
+### Context Manager vs Manual Frame Management
+
+PyMUI supports both automatic and manual frame management:
+
+```python
+# 🎯 Recommended: Context Manager (Automatic)
+with pymui.Context() as ctx:
+    # begin() called automatically
+    if ctx.button("Safe Button"):
+        print("Clicked!")
+    # end() called automatically, even on exceptions
+
+# 🔧 Manual Management (Advanced)
+ctx = pymui.Context()
+ctx.begin()
+try:
+    if ctx.button("Manual Button"):
+        print("Clicked!")
+finally:
+    ctx.end()  # Must always call end()
+```
+
+**Benefits of Context Manager:**
+- **Automatic cleanup** - `end()` always called, even on exceptions
+- **Cleaner code** - No need to remember begin/end pairs
+- **Exception safety** - Proper cleanup guaranteed
+- **Pythonic** - Follows Python's context manager idiom
+
+### Context Manager Best Practices
+
+```python
+# ✅ Good: Use context manager for each frame
+def render_frame():
+    with pymui.Context() as ctx:
+        # All UI code here
+        if ctx.begin_window("Window", pymui.rect(10, 10, 200, 150)):
+            ctx.label("Hello!")
+            ctx.end_window()
+
+# ✅ Good: Exception handling is automatic
+def risky_ui_operation():
+    with pymui.Context() as ctx:
+        if ctx.begin_window("Risk", pymui.rect(10, 10, 200, 150)):
+            if some_condition():
+                raise ValueError("Something went wrong")
+            ctx.label("This might not execute")
+            ctx.end_window()
+        # ctx.end() called automatically even if exception occurs
+
+# ❌ Avoid: Manual management without proper exception handling
+def bad_manual_approach():
+    ctx = pymui.Context()
+    ctx.begin()
+    # If exception occurs here, end() won't be called!
+    risky_operation()
+    ctx.end()
+
+# ✅ Better: Manual with proper exception handling
+def good_manual_approach():
+    ctx = pymui.Context()
+    ctx.begin()
+    try:
+        risky_operation()
+    finally:
+        ctx.end()  # Always called
 ```
 
 ### Layout System
@@ -88,28 +155,25 @@ for frame in main_loop():
 PyMUI uses a flexible row-based layout system:
 
 ```python
-ctx.begin()
+with pymui.Context() as ctx:
+    if ctx.begin_window("Layout Demo", pymui.Rect(10, 10, 300, 200)):
+        # Two columns: 100px wide, remaining space
+        ctx.layout_row([100, -1], 25)
 
-if ctx.begin_window("Layout Demo", pymui.Rect(10, 10, 300, 200)):
-    # Two columns: 100px wide, remaining space
-    ctx.layout_row([100, -1], 25)
+        ctx.label("Name:")
+        result, name = ctx.textbox("", 64)
 
-    ctx.label("Name:")
-    result, name = ctx.textbox("", 64)
+        # Three equal columns
+        ctx.layout_row([80, 80, 80], 25)
 
-    # Three equal columns
-    ctx.layout_row([80, 80, 80], 25)
+        if ctx.button("OK"):
+            print("OK clicked")
+        if ctx.button("Cancel"):
+            print("Cancel clicked")
+        if ctx.button("Help"):
+            print("Help clicked")
 
-    if ctx.button("OK"):
-        print("OK clicked")
-    if ctx.button("Cancel"):
-        print("Cancel clicked")
-    if ctx.button("Help"):
-        print("Help clicked")
-
-    ctx.end_window()
-
-ctx.end()
+        ctx.end_window()
 ```
 
 ### State Management
@@ -126,19 +190,16 @@ class AppState:
 state = AppState()
 
 def update_ui():
-    ctx.begin()
+    with pymui.Context() as ctx:
+        if ctx.begin_window("Counter", pymui.Rect(10, 10, 200, 100)):
+            ctx.label(f"Count: {state.counter}")
 
-    if ctx.begin_window("Counter", pymui.Rect(10, 10, 200, 100)):
-        ctx.label(f"Count: {state.counter}")
+            if ctx.button("Increment"):
+                state.counter += 1
 
-        if ctx.button("Increment"):
-            state.counter += 1
+            result, state.enabled = ctx.checkbox("Enabled", state.enabled)
 
-        result, state.enabled = ctx.checkbox("Enabled", state.enabled)
-
-        ctx.end_window()
-
-    ctx.end()
+            ctx.end_window()
 ```
 
 ## Complete Example: Todo App
@@ -164,33 +225,30 @@ class TodoApp:
             del self.todos[index]
 
     def update(self):
-        self.ctx.begin()
+        with self.ctx:  # Use context manager
+            if self.ctx.begin_window("Todo App", pymui.Rect(50, 50, 400, 300)):
+                # Header
+                self.ctx.layout_row([-1], 25)
+                self.ctx.label("My Todo List")
 
-        if self.ctx.begin_window("Todo App", pymui.Rect(50, 50, 400, 300)):
-            # Header
-            self.ctx.layout_row([-1], 25)
-            self.ctx.label("My Todo List")
+                # Todo list
+                for i, todo in enumerate(self.todos):
+                    self.ctx.layout_row([-50, -1], 25)
+                    self.ctx.label(todo)
 
-            # Todo list
-            for i, todo in enumerate(self.todos):
-                self.ctx.layout_row([-50, -1], 25)
-                self.ctx.label(todo)
+                    self.ctx.push_id(f"del_{i}")
+                    if self.ctx.button("Delete"):
+                        self.remove_todo(i)
+                    self.ctx.pop_id()
 
-                self.ctx.push_id(f"del_{i}")
-                if self.ctx.button("Delete"):
-                    self.remove_todo(i)
-                self.ctx.pop_id()
+                # Add new todo
+                self.ctx.layout_row([-80, -1], 25)
+                result, self.new_todo = self.ctx.textbox(self.new_todo, 128)
 
-            # Add new todo
-            self.ctx.layout_row([-80, -1], 25)
-            result, self.new_todo = self.ctx.textbox(self.new_todo, 128)
+                if self.ctx.button("Add") or (result & pymui.Result.SUBMIT):
+                    self.add_todo()
 
-            if self.ctx.button("Add") or (result & pymui.Result.SUBMIT):
-                self.add_todo()
-
-            self.ctx.end_window()
-
-        self.ctx.end()
+                self.ctx.end_window()
 
 # Run the app (with SDL2 renderer)
 if __name__ == "__main__":
@@ -459,14 +517,11 @@ def main():
             # Pass events to PyMUI context
 
         # Update UI
-        ctx.begin()
-
-        if ctx.begin_window("Demo", pymui.Rect(10, 10, 200, 150)):
-            if ctx.button("Quit"):
-                running = False
-            ctx.end_window()
-
-        ctx.end()
+        with ctx:  # Context manager handles begin/end
+            if ctx.begin_window("Demo", pymui.Rect(10, 10, 200, 150)):
+                if ctx.button("Quit"):
+                    running = False
+                ctx.end_window()
 
         # Render (implement your renderer)
         render_ui(ctx)
@@ -638,10 +693,19 @@ ls src/pymui/pymui.*.so
 
 **Segmentation Fault**: Usually caused by calling UI functions without proper context
 ```python
-# Always use begin/end pairs
+# ✅ Recommended: Use context manager
+with pymui.Context() as ctx:
+    # UI code here - begin/end handled automatically
+    pass
+
+# ✅ Alternative: Manual begin/end pairs
+ctx = pymui.Context()
 ctx.begin()
-# UI code here
-ctx.end()
+try:
+    # UI code here
+    pass
+finally:
+    ctx.end()
 ```
 
 **Performance Issues**:
