@@ -21,6 +21,14 @@ logbuf = []
 logbuf_updated = False
 bg = [90.0, 95.0, 100.0]  # Background color RGB
 
+# Persistent state for checkboxes (equivalent to static variables in C)
+# Use integers (0/1) like the C demo instead of booleans
+checkbox_state = {
+    'checks_0': 1,
+    'checks_1': 0,
+    'checks_2': 1
+}
+
 
 def write_log(text):
     """Add text to the log buffer"""
@@ -105,12 +113,29 @@ def test_window(ctx):
 
             if ctx.begin_treenode("Test 3"):
                 # Note: checkbox returns (result, new_state)
-                result, checks_0 = ctx.checkbox("Checkbox 1", getattr(test_window, 'checks_0', True))
-                test_window.checks_0 = checks_0
-                result, checks_1 = ctx.checkbox("Checkbox 2", getattr(test_window, 'checks_1', False))
-                test_window.checks_1 = checks_1
-                result, checks_2 = ctx.checkbox("Checkbox 3", getattr(test_window, 'checks_2', True))
-                test_window.checks_2 = checks_2
+                global checkbox_state
+
+                ctx.push_id("checkbox_1")
+                result, new_state = ctx.checkbox("Checkbox 1", checkbox_state['checks_0'])
+                if result & pymui.Result.CHANGE:
+                    write_log(f"Checkbox 1 changed to {new_state}")
+                checkbox_state['checks_0'] = new_state
+                ctx.pop_id()
+
+                ctx.push_id("checkbox_2")
+                result, new_state = ctx.checkbox("Checkbox 2", checkbox_state['checks_1'])
+                if result & pymui.Result.CHANGE:
+                    write_log(f"Checkbox 2 changed to {new_state}")
+                checkbox_state['checks_1'] = new_state
+                ctx.pop_id()
+
+                ctx.push_id("checkbox_3")
+                result, new_state = ctx.checkbox("Checkbox 3", checkbox_state['checks_2'])
+                if result & pymui.Result.CHANGE:
+                    write_log(f"Checkbox 3 changed to {new_state}")
+                checkbox_state['checks_2'] = new_state
+                ctx.pop_id()
+
                 ctx.end_treenode()
 
             ctx.layout_end_column()
@@ -131,11 +156,17 @@ def test_window(ctx):
             ctx.layout_row([46, -1], 0)
 
             ctx.label("Red:")
+            ctx.push_id("bg_red")
             result, bg[0] = ctx.slider(bg[0], 0, 255)
+            ctx.pop_id()
             ctx.label("Green:")
+            ctx.push_id("bg_green")
             result, bg[1] = ctx.slider(bg[1], 0, 255)
+            ctx.pop_id()
             ctx.label("Blue:")
+            ctx.push_id("bg_blue")
             result, bg[2] = ctx.slider(bg[2], 0, 255)
+            ctx.pop_id()
 
             ctx.layout_end_column()
 
@@ -189,9 +220,20 @@ def log_window(ctx):
         ctx.end_window()
 
 
-def uint8_slider(ctx, value, low, high):
+# Global counter for unique slider IDs
+_slider_id_counter = 0
+
+def uint8_slider(ctx, value, low, high, unique_id=None):
     """Custom slider for uint8 values"""
-    ctx.push_id(str(id(value)))
+    global _slider_id_counter
+
+    # Use a unique ID based on either the provided unique_id or a global counter
+    if unique_id is not None:
+        ctx.push_id(str(unique_id))
+    else:
+        ctx.push_id(f"slider_{_slider_id_counter}")
+        _slider_id_counter += 1
+
     result, new_value = ctx.slider(float(value), float(low), float(high), 0, "%.0f", pymui.Option.ALIGNCENTER)
     ctx.pop_id()
     return result, int(new_value)
@@ -228,13 +270,11 @@ def style_window(ctx):
                 # Get current color
                 color = ctx.style.get_color(color_idx)
 
-                # Create sliders for R, G, B, A
-                ctx.push_id(f"color_{color_idx}")
-
-                result, color.r = uint8_slider(ctx, color.r, 0, 255)
-                result, color.g = uint8_slider(ctx, color.g, 0, 255)
-                result, color.b = uint8_slider(ctx, color.b, 0, 255)
-                result, color.a = uint8_slider(ctx, color.a, 0, 255)
+                # Create sliders for R, G, B, A with unique IDs
+                result, color.r = uint8_slider(ctx, color.r, 0, 255, f"color_{color_idx}_r")
+                result, color.g = uint8_slider(ctx, color.g, 0, 255, f"color_{color_idx}_g")
+                result, color.b = uint8_slider(ctx, color.b, 0, 255, f"color_{color_idx}_b")
+                result, color.a = uint8_slider(ctx, color.a, 0, 255, f"color_{color_idx}_a")
 
                 # Update the style color
                 ctx.style.set_color(color_idx, color)
@@ -242,8 +282,6 @@ def style_window(ctx):
                 # Draw color preview
                 preview_rect = ctx.layout_next()
                 ctx.draw_rect(preview_rect, color)
-
-                ctx.pop_id()
 
         ctx.end_window()
 
