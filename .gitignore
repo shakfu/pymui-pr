@@ -25,6 +25,7 @@ sdist/
 .*_cache/
 *.egg-info
 .ropeproject
+.hypothesis
 
 # claude
 .claude

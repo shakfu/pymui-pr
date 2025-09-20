@@ -1,4 +1,4 @@
-.phony: all build clean demo test
+.phony: all build clean demo test test-all test-safe memory-test performance-test
 
 all: build
 
@@ -16,6 +16,21 @@ clean:
 demo:
 	@uv run python tests/pymui_sdl_demo.py
 
-
 test:
 	@uv run pytest
+
+test-safe:
+	@echo "Running only safe tests (no UI context operations)..."
+	@uv run pytest tests/test_pymui.py tests/test_property_minimal.py tests/test_memory_safety.py
+
+test-all:
+	@echo "Running ALL tests (including potentially unstable UI context tests)..."
+	@uv run pytest --ignore=none
+
+memory-test:
+	@echo "Running memory leak detection..."
+	@uv run python scripts/memory_leak_test.py --verbose
+
+performance-test:
+	@echo "Running performance benchmarks..."
+	@uv run python scripts/benchmark.py
