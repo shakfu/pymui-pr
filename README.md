@@ -6,6 +6,8 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#building)
 
+**NOTE: Development of PyMUI will contiue in the [pymui](https://github.com/shakfu/pymui) repository. This repo my be archive or deleted in the future.**
+
 PyMUI provides Python bindings for [microui](https://github.com/rxi/microui), a tiny (~1100 SLOC) portable immediate-mode UI library written in ANSI C. This wrapper allows you to create lightweight, responsive user interfaces in Python while maintaining the performance and simplicity of the original C library.
 
 ## Features
