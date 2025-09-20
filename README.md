@@ -12,13 +12,13 @@ PyMUI provides Python bindings for [microui](https://github.com/rxi/microui), a 
 
 ## Features
 
-- 🐍 **Pythonic API** - Clean, intuitive Python interface
-- ⚡ **High Performance** - Direct Cython bindings to C library
-- 🎯 **Immediate Mode** - No retained widget objects, simple state management
-- 🏗️ **Flexible Layout** - Dynamic row-based layout system
-- 🎨 **Customizable** - Full control over styling and rendering
-- 🔧 **Memory Safe** - Comprehensive bounds checking and error handling
-- 📦 **Easy Integration** - Works with any rendering backend (SDL2, OpenGL, etc.)
+-  **Pythonic API** - Clean, intuitive Python interface
+-  **High Performance** - Direct Cython bindings to C library
+-  **Immediate Mode** - No retained widget objects, simple state management
+-  **Flexible Layout** - Dynamic row-based layout system
+-  **Customizable** - Full control over styling and rendering
+-  **Memory Safe** - Comprehensive bounds checking and error handling
+-  **Easy Integration** - Works with any rendering backend (SDL2, OpenGL, etc.)
 
 ## Quick Start
 
@@ -95,14 +95,14 @@ for frame in main_loop():
 PyMUI supports both automatic and manual frame management:
 
 ```python
-# 🎯 Recommended: Context Manager (Automatic)
+#  Recommended: Context Manager (Automatic)
 with pymui.Context() as ctx:
     # begin() called automatically
     if ctx.button("Safe Button"):
         print("Clicked!")
     # end() called automatically, even on exceptions
 
-# 🔧 Manual Management (Advanced)
+#  Manual Management (Advanced)
 ctx = pymui.Context()
 ctx.begin()
 try:
@@ -121,7 +121,7 @@ finally:
 ### Context Manager Best Practices
 
 ```python
-# ✅ Good: Use context manager for each frame
+#  Good: Use context manager for each frame
 def render_frame():
     with pymui.Context() as ctx:
         # All UI code here
@@ -129,7 +129,7 @@ def render_frame():
             ctx.label("Hello!")
             ctx.end_window()
 
-# ✅ Good: Exception handling is automatic
+#  Good: Exception handling is automatic
 def risky_ui_operation():
     with pymui.Context() as ctx:
         if ctx.begin_window("Risk", pymui.rect(10, 10, 200, 150)):
@@ -139,7 +139,7 @@ def risky_ui_operation():
             ctx.end_window()
         # ctx.end() called automatically even if exception occurs
 
-# ❌ Avoid: Manual management without proper exception handling
+#  Avoid: Manual management without proper exception handling
 def bad_manual_approach():
     ctx = pymui.Context()
     ctx.begin()
@@ -147,7 +147,7 @@ def bad_manual_approach():
     risky_operation()
     ctx.end()
 
-# ✅ Better: Manual with proper exception handling
+#  Better: Manual with proper exception handling
 def good_manual_approach():
     ctx = pymui.Context()
     ctx.begin()
@@ -162,7 +162,7 @@ def good_manual_approach():
 PyMUI provides an additional context manager for windows that automatically handles `begin_window()` and `end_window()` calls:
 
 ```python
-# 🎯 Recommended: Window context manager
+#  Recommended: Window context manager
 with pymui.Context() as ctx:
     with ctx.window("My App", 10, 10, 300, 200) as window:
         if window.is_open:
@@ -171,13 +171,13 @@ with pymui.Context() as ctx:
                 print("Button clicked!")
         # end_window() called automatically
 
-# 🔧 Alternative: Manual window management
+#  Alternative: Manual window management
 with pymui.Context() as ctx:
     if ctx.begin_window("Manual", pymui.Rect(10, 10, 300, 200)):
         ctx.label("Content goes here")
         ctx.end_window()  # Must remember to call this
 
-# 🏗️ Multiple windows with context managers
+#  Multiple windows with context managers
 with pymui.Context() as ctx:
     with ctx.window("Window 1", 10, 10, 200, 150) as w1:
         if w1.is_open:
@@ -479,15 +479,15 @@ make clean
 
 ```
 pymui/
-├── src/pymui/          # Main Python package
-│   ├── pymui.pyx      # Cython wrapper
-│   └── __init__.py    # Package init
-├── microui/           # Upstream C library (submodule)
-├── tests/            # Test suite
-├── scripts/          # Development tools
-├── doc/              # Documentation
-├── .github/          # CI/CD workflows
-└── examples/         # Usage examples
+ src/pymui/          # Main Python package
+    pymui.pyx      # Cython wrapper
+    __init__.py    # Package init
+ microui/           # Upstream C library (submodule)
+ tests/            # Test suite
+ scripts/          # Development tools
+ doc/              # Documentation
+ .github/          # CI/CD workflows
+ examples/         # Usage examples
 ```
 
 ## Testing
@@ -743,12 +743,12 @@ ls src/pymui/pymui.*.so
 
 **Segmentation Fault**: Usually caused by calling UI functions without proper context
 ```python
-# ✅ Recommended: Use context manager
+#  Recommended: Use context manager
 with pymui.Context() as ctx:
     # UI code here - begin/end handled automatically
     pass
 
-# ✅ Alternative: Manual begin/end pairs
+#  Alternative: Manual begin/end pairs
 ctx = pymui.Context()
 ctx.begin()
 try:
@@ -784,4 +784,4 @@ The underlying microui library is also MIT licensed.
 
 ---
 
-**Happy UI building with PyMUI! 🎨🐍**
+**Happy UI building with PyMUI! **
