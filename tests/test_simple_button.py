@@ -15,7 +15,7 @@ except ImportError:
 
 
 def main():
-    """Debug mouse input specifically"""
+    """Simple button test"""
     # Initialize SDL
     if sdl2.SDL_Init(sdl2.SDL_INIT_EVERYTHING) != 0:
         print(f"SDL_Init Error: {sdl2.SDL_GetError()}")
@@ -26,14 +26,13 @@ def main():
         pymui.renderer_init()
         print("Creating context...")
         ctx = pymui.Context()
-        print("Mouse debug test started - move mouse and click to see events")
+        print("Simple button test - click the button to test responsiveness")
+        print("Press Escape to exit")
 
         running = True
-        frame_count = 0
+        click_count = 0
 
-        while running and frame_count < 600:  # Max 10 seconds at 60fps
-            frame_count += 1
-
+        while running:
             # Handle SDL events
             event = sdl2.SDL_Event()
             while sdl2.SDL_PollEvent(ctypes.byref(event)):
@@ -44,7 +43,6 @@ def main():
                     print("Escape pressed")
                     running = False
                 elif event.type == sdl2.SDL_MOUSEMOTION:
-                    print(f"Mouse motion: ({event.motion.x}, {event.motion.y})")
                     ctx.input_mousemove(event.motion.x, event.motion.y)
                 elif event.type == sdl2.SDL_MOUSEBUTTONDOWN:
                     print(f"Mouse down: button={event.button.button} at ({event.button.x}, {event.button.y})")
@@ -61,9 +59,13 @@ def main():
             ctx.begin()
 
             # Simple button test
-            if ctx.begin_window("Mouse Test", pymui.rect(100, 100, 200, 100)):
-                if ctx.button("Test Button"):
-                    print("*** BUTTON CLICKED! ***")
+            if ctx.begin_window("Button Test", pymui.rect(100, 100, 200, 150)):
+                ctx.label("Click the button below:")
+                if ctx.button("Click Me!"):
+                    click_count += 1
+                    print(f"*** BUTTON CLICKED! Count: {click_count} ***")
+                
+                ctx.label(f"Clicks: {click_count}")
                 ctx.end_window()
 
             ctx.end()
@@ -89,7 +91,7 @@ def main():
 
             pymui.renderer_present()
 
-        print("Mouse debug test completed")
+        print(f"Test completed. Total clicks: {click_count}")
 
     except Exception as e:
         print(f"Error: {e}")

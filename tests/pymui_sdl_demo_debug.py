@@ -29,6 +29,7 @@ def write_log(text):
     if len(logbuf) > 100:  # Keep log manageable
         logbuf.pop(0)
     logbuf_updated = True
+    print(f"LOG: {text}")  # Debug output
 
 
 def test_window(ctx):
@@ -132,10 +133,16 @@ def test_window(ctx):
 
             ctx.label("Red:")
             result, bg[0] = ctx.slider(bg[0], 0, 255)
+            if result & pymui.Result.CHANGE:
+                write_log(f"Red slider changed to {bg[0]}")
             ctx.label("Green:")
             result, bg[1] = ctx.slider(bg[1], 0, 255)
+            if result & pymui.Result.CHANGE:
+                write_log(f"Green slider changed to {bg[1]}")
             ctx.label("Blue:")
             result, bg[2] = ctx.slider(bg[2], 0, 255)
+            if result & pymui.Result.CHANGE:
+                write_log(f"Blue slider changed to {bg[2]}")
 
             ctx.layout_end_column()
 
@@ -189,69 +196,9 @@ def log_window(ctx):
         ctx.end_window()
 
 
-def uint8_slider(ctx, value, low, high):
-    """Custom slider for uint8 values"""
-    ctx.push_id(str(id(value)))
-    result, new_value = ctx.slider(float(value), float(low), float(high), 0, "%.0f", pymui.Option.ALIGNCENTER)
-    ctx.pop_id()
-    return result, int(new_value)
-
-
-def style_window(ctx):
-    """Create the style editor window"""
-    colors_info = [
-        ("text:", pymui.ColorIndex.TEXT),
-        ("border:", pymui.ColorIndex.BORDER),
-        ("windowbg:", pymui.ColorIndex.WINDOWBG),
-        ("titlebg:", pymui.ColorIndex.TITLEBG),
-        ("titletext:", pymui.ColorIndex.TITLETEXT),
-        ("panelbg:", pymui.ColorIndex.PANELBG),
-        ("button:", pymui.ColorIndex.BUTTON),
-        ("buttonhover:", pymui.ColorIndex.BUTTONHOVER),
-        ("buttonfocus:", pymui.ColorIndex.BUTTONFOCUS),
-        ("base:", pymui.ColorIndex.BASE),
-        ("basehover:", pymui.ColorIndex.BASEHOVER),
-        ("basefocus:", pymui.ColorIndex.BASEFOCUS),
-        ("scrollbase:", pymui.ColorIndex.SCROLLBASE),
-        ("scrollthumb:", pymui.ColorIndex.SCROLLTHUMB),
-    ]
-
-    if ctx.begin_window("Style Editor", pymui.rect(350, 250, 300, 240)):
-        win = ctx.get_current_container()
-        if win:
-            sw = int(win.body.w * 0.14)
-            ctx.layout_row([80, sw, sw, sw, sw, -1], 0)
-
-            for label, color_idx in colors_info:
-                ctx.label(label)
-
-                # Get current color
-                color = ctx.style.get_color(color_idx)
-
-                # Create sliders for R, G, B, A
-                ctx.push_id(f"color_{color_idx}")
-
-                result, color.r = uint8_slider(ctx, color.r, 0, 255)
-                result, color.g = uint8_slider(ctx, color.g, 0, 255)
-                result, color.b = uint8_slider(ctx, color.b, 0, 255)
-                result, color.a = uint8_slider(ctx, color.a, 0, 255)
-
-                # Update the style color
-                ctx.style.set_color(color_idx, color)
-
-                # Draw color preview
-                preview_rect = ctx.layout_next()
-                ctx.draw_rect(preview_rect, color)
-
-                ctx.pop_id()
-
-        ctx.end_window()
-
-
 def process_frame(ctx):
     """Process one frame of UI"""
     ctx.begin()
-    style_window(ctx)
     log_window(ctx)
     test_window(ctx)
     ctx.end()
@@ -293,6 +240,10 @@ def main():
         # Initialize microui context
         ctx = pymui.Context()
 
+        print("Starting debug demo...")
+        print("Try clicking buttons, moving sliders, and typing in the textbox")
+        print("Press Escape to exit")
+
         # Main loop
         running = True
         while running:
@@ -300,6 +251,8 @@ def main():
             event = sdl2.SDL_Event()
             while sdl2.SDL_PollEvent(ctypes.byref(event)):
                 if event.type == sdl2.SDL_QUIT:
+                    running = False
+                elif event.type == sdl2.SDL_KEYDOWN and event.key.keysym.sym == sdl2.SDLK_ESCAPE:
                     running = False
                 elif event.type == sdl2.SDL_MOUSEMOTION:
                     ctx.input_mousemove(event.motion.x, event.motion.y)

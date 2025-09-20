@@ -15,7 +15,7 @@ except ImportError:
 
 
 def main():
-    """Debug mouse input specifically"""
+    """Test text input specifically"""
     # Initialize SDL
     if sdl2.SDL_Init(sdl2.SDL_INIT_EVERYTHING) != 0:
         print(f"SDL_Init Error: {sdl2.SDL_GetError()}")
@@ -26,14 +26,14 @@ def main():
         pymui.renderer_init()
         print("Creating context...")
         ctx = pymui.Context()
-        print("Mouse debug test started - move mouse and click to see events")
+        print("Text input test - try typing in the textbox")
+        print("Press Escape to exit")
 
         running = True
-        frame_count = 0
+        text_buf = ""
+        text_submissions = 0
 
-        while running and frame_count < 600:  # Max 10 seconds at 60fps
-            frame_count += 1
-
+        while running:
             # Handle SDL events
             event = sdl2.SDL_Event()
             while sdl2.SDL_PollEvent(ctypes.byref(event)):
@@ -44,26 +44,55 @@ def main():
                     print("Escape pressed")
                     running = False
                 elif event.type == sdl2.SDL_MOUSEMOTION:
-                    print(f"Mouse motion: ({event.motion.x}, {event.motion.y})")
                     ctx.input_mousemove(event.motion.x, event.motion.y)
                 elif event.type == sdl2.SDL_MOUSEBUTTONDOWN:
-                    print(f"Mouse down: button={event.button.button} at ({event.button.x}, {event.button.y})")
                     btn = pymui.Mouse.LEFT if event.button.button == sdl2.SDL_BUTTON_LEFT else 0
                     if btn:
                         ctx.input_mousedown(event.button.x, event.button.y, btn)
                 elif event.type == sdl2.SDL_MOUSEBUTTONUP:
-                    print(f"Mouse up: button={event.button.button} at ({event.button.x}, {event.button.y})")
                     btn = pymui.Mouse.LEFT if event.button.button == sdl2.SDL_BUTTON_LEFT else 0
                     if btn:
                         ctx.input_mouseup(event.button.x, event.button.y, btn)
+                elif event.type == sdl2.SDL_TEXTINPUT:
+                    # Convert bytes to string properly
+                    text_bytes = event.text.text
+                    # Find null terminator
+                    null_pos = text_bytes.find(b'\x00')
+                    if null_pos >= 0:
+                        text_bytes = text_bytes[:null_pos]
+                    text = text_bytes.decode('utf-8', errors='replace')
+                    print(f"Text input received: '{text}'")
+                    ctx.input_text(text)
+                elif event.type == sdl2.SDL_KEYDOWN:
+                    # Handle special keys
+                    if event.key.keysym.sym == sdl2.SDLK_RETURN:
+                        print("Return key pressed")
+                        ctx.input_keydown(pymui.Key.RETURN)
+                    elif event.key.keysym.sym == sdl2.SDLK_BACKSPACE:
+                        print("Backspace key pressed")
+                        ctx.input_keydown(pymui.Key.BACKSPACE)
 
             # Process frame
             ctx.begin()
 
-            # Simple button test
-            if ctx.begin_window("Mouse Test", pymui.rect(100, 100, 200, 100)):
-                if ctx.button("Test Button"):
-                    print("*** BUTTON CLICKED! ***")
+            # Text input test
+            if ctx.begin_window("Text Input Test", pymui.rect(100, 100, 300, 200)):
+                ctx.label("Type in the textbox below:")
+                
+                # Textbox test
+                result, text_buf = ctx.textbox_ex(text_buf, 128)
+                if result & pymui.Result.SUBMIT:
+                    text_submissions += 1
+                    print(f"*** TEXT SUBMITTED! Count: {text_submissions}, Text: '{text_buf}' ***")
+                
+                if ctx.button("Submit"):
+                    text_submissions += 1
+                    print(f"*** SUBMIT BUTTON CLICKED! Count: {text_submissions}, Text: '{text_buf}' ***")
+                
+                # Show current values
+                ctx.label(f"Current text: '{text_buf}'")
+                ctx.label(f"Submissions: {text_submissions}")
+                
                 ctx.end_window()
 
             ctx.end()
@@ -89,7 +118,7 @@ def main():
 
             pymui.renderer_present()
 
-        print("Mouse debug test completed")
+        print(f"Test completed. Text submissions: {text_submissions}")
 
     except Exception as e:
         print(f"Error: {e}")

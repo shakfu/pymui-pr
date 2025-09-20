@@ -77,48 +77,48 @@ cdef class Rect:
         self._rect.y = y
         self._rect.w = w
         self._rect.h = h
-    
+
     @property
     def x(self) -> int:
         return self._rect.x
-    
+
     @x.setter
     def x(self, int value):
         self._rect.x = value
-    
+
     @property
     def y(self) -> int:
         return self._rect.y
-    
+
     @y.setter
     def y(self, int value):
         self._rect.y = value
-    
+
     @property
     def w(self) -> int:
         return self._rect.w
-    
+
     @w.setter
     def w(self, int value):
         self._rect.w = value
-    
+
     @property
     def h(self) -> int:
         return self._rect.h
-    
+
     @h.setter
     def h(self, int value):
         self._rect.h = value
-    
+
     def __repr__(self):
         return f"Rect({self.x}, {self.y}, {self.w}, {self.h})"
-    
+
     @staticmethod
     cdef Rect from_c(mu_Rect rect):
         cdef Rect result = Rect.__new__(Rect)
         result._rect = rect
         return result
-    
+
     cdef mu_Rect to_c(self):
         return self._rect
 
@@ -131,11 +131,11 @@ cdef class Color:
         self._color.g = g
         self._color.b = b
         self._color.a = a
-    
+
     @property
     def r(self) -> int:
         return self._color.r
-    
+
     @r.setter
     def r(self, int value):
         self._color.r = value
@@ -530,17 +530,17 @@ cdef class Context:
     
     def textbox_ex(self, str buf, int bufsz, int opt=0) -> tuple:
         """Create a textbox - returns (result, new_text)"""
-        # Declare all cdef variables at the beginning
-        cdef char* c_buf
+        # This is a simplified implementation that doesn't maintain state between frames
+        # For proper textbox functionality, we would need a persistent buffer class
+        # For now, this will work for basic text input but won't maintain cursor position
+        
+        cdef char* c_buf = <char*>malloc(bufsz)
+        if c_buf == NULL:
+            raise MemoryError("Failed to allocate textbox buffer")
+        
         cdef bytes b_buf
         cdef int copy_len
         cdef int result
-        cdef bytes result_bytes
-        
-        # Create a mutable buffer
-        c_buf = <char*>malloc(bufsz)
-        if c_buf == NULL:
-            raise MemoryError("Failed to allocate textbox buffer")
         
         try:
             # Copy initial text to buffer
@@ -553,8 +553,9 @@ cdef class Context:
             result = mu_textbox_ex(self.ptr, c_buf, bufsz, opt)
             
             # Convert back to Python string
-            result_bytes = c_buf
-            return (result, result_bytes.decode('utf-8', errors='replace'))
+            new_text = c_buf.decode('utf-8', errors='replace')
+            
+            return (result, new_text)
         finally:
             free(c_buf)
     
@@ -1002,6 +1003,44 @@ class Key:
     ALT = MU_KEY_ALT
     BACKSPACE = MU_KEY_BACKSPACE
     RETURN = MU_KEY_RETURN
+
+
+# Textbox class for persistent state
+cdef class Textbox:
+    cdef char* buffer
+    cdef int buffer_size
+    cdef str current_text
+    
+    def __cinit__(self, int buffer_size=128):
+        self.buffer_size = buffer_size
+        self.buffer = <char*>malloc(buffer_size)
+        if self.buffer == NULL:
+            raise MemoryError("Failed to allocate textbox buffer")
+        self.buffer[0] = 0  # null terminate
+        self.current_text = ""
+    
+    def __dealloc__(self):
+        if self.buffer != NULL:
+            free(self.buffer)
+            self.buffer = NULL
+    
+    def update(self, Context ctx, int opt=0) -> tuple:
+        """Update the textbox and return (result, new_text)"""
+        cdef int result = mu_textbox_ex(ctx.ptr, self.buffer, self.buffer_size, opt)
+        self.current_text = self.buffer.decode('utf-8', errors='replace')
+        return (result, self.current_text)
+    
+    @property
+    def text(self) -> str:
+        return self.current_text
+    
+    @text.setter
+    def text(self, str value):
+        cdef bytes b_value = value.encode('utf-8')
+        cdef int copy_len = min(len(b_value), self.buffer_size - 1)
+        memcpy(self.buffer, <const char*>b_value, copy_len)
+        self.buffer[copy_len] = 0  # null terminate
+        self.current_text = value
 
 
 # Renderer functions exposed as module-level functions
