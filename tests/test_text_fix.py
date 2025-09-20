@@ -16,6 +16,9 @@ except ImportError:
 
 def test_text_rendering(ctx):
     """Test window to verify text rendering fix"""
+    # Properly initialize frame
+    ctx.begin()
+
     if ctx.begin_window("Text Test", pymui.rect(100, 100, 300, 200)):
         ctx.layout_row([150, -1], 0)
 
@@ -37,6 +40,9 @@ def test_text_rendering(ctx):
         ctx.text("Text with symbols: !@#$%")
 
         ctx.end_window()
+
+    # Properly end frame
+    ctx.end()
 
 
 def main():

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A cython wrapper for microui"
 readme = "README.md"
 authors = [{ name = "rxi", email = "rxi@rxi.github.io" }]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "pysdl2>=0.9.17",
     #"pysdl2-dll>=2.32.0",

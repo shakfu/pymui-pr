@@ -41,6 +41,9 @@ def test_ui_window(ctx):
     """Test window with sliders and checkboxes"""
     global slider_val, checkbox_state
 
+    # Properly initialize frame
+    ctx.begin()
+
     if ctx.begin_window("UI Test", pymui.rect(50, 50, 300, 200)):
         ctx.layout_row([100, -1], 0)
 
@@ -67,6 +70,9 @@ def test_ui_window(ctx):
         ctx.label(f"Checkbox state: {checkbox_state}")
 
         ctx.end_window()
+
+    # Properly end frame
+    ctx.end()
 
 
 def main():

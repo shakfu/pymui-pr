@@ -13,45 +13,111 @@ ctypedef fused number:
 
 # Version function
 def version() -> str:
+    """Get the microui library version.
+
+    Returns:
+        str: The version string of the underlying microui library.
+    """
     return MU_VERSION.decode()
 
 def clamp(number x, number a, number b) -> number:
+    """Clamp a value between minimum and maximum bounds.
+
+    Args:
+        x: The value to clamp
+        a: The minimum bound
+        b: The maximum bound
+
+    Returns:
+        The clamped value, guaranteed to be between a and b (inclusive)
+    """
     return min(b, max(a, x))
 
 # Global convenience functions
 def vec2(int x, int y) -> Vec2:
-    """Create a Vec2"""
+    """Create a 2D vector with the given coordinates.
+
+    Args:
+        x (int): The x coordinate
+        y (int): The y coordinate
+
+    Returns:
+        Vec2: A new Vec2 instance with the specified coordinates
+    """
     return Vec2.from_c(mu_vec2(x, y))
 
 def rect(int x, int y, int w, int h) -> Rect:
-    """Create a Rect"""
+    """Create a rectangle with the given position and dimensions.
+
+    Args:
+        x (int): The x coordinate of the top-left corner
+        y (int): The y coordinate of the top-left corner
+        w (int): The width of the rectangle
+        h (int): The height of the rectangle
+
+    Returns:
+        Rect: A new Rect instance with the specified dimensions
+    """
     return Rect.from_c(mu_rect(x, y, w, h))
 
 def color(int r, int g, int b, int a=255) -> Color:
-    """Create a Color"""
+    """Create a color with the given RGBA values.
+
+    Args:
+        r (int): Red component (0-255)
+        g (int): Green component (0-255)
+        b (int): Blue component (0-255)
+        a (int, optional): Alpha component (0-255). Defaults to 255 (fully opaque).
+
+    Returns:
+        Color: A new Color instance with the specified RGBA values
+    """
     return Color.from_c(mu_color(r, g, b, a))
 
 
 # Basic struct classes
 cdef class Vec2:
+    """A 2D vector with integer coordinates.
+
+    This class represents a 2D vector with x and y integer coordinates,
+    commonly used for positions, sizes, and offsets in the UI system.
+
+    Attributes:
+        x (int): The x coordinate
+        y (int): The y coordinate
+
+    Example:
+        >>> v = Vec2(10, 20)
+        >>> print(v.x, v.y)  # Output: 10 20
+        >>> v.x = 30
+        >>> print(v)  # Output: Vec2(30, 20)
+    """
     cdef mu_Vec2 _vec
-    
+
     def __cinit__(self, int x=0, int y=0):
+        """Initialize a Vec2 with the given coordinates.
+
+        Args:
+            x (int, optional): The x coordinate. Defaults to 0.
+            y (int, optional): The y coordinate. Defaults to 0.
+        """
         self._vec.x = x
         self._vec.y = y
     
     @property
     def x(self) -> int:
+        """Get or set the x coordinate."""
         return self._vec.x
-    
+
     @x.setter
     def x(self, int value):
         self._vec.x = value
-    
+
     @property
     def y(self) -> int:
+        """Get or set the y coordinate."""
         return self._vec.y
-    
+
     @y.setter
     def y(self, int value):
         self._vec.y = value
@@ -70,9 +136,33 @@ cdef class Vec2:
 
 
 cdef class Rect:
+    """A rectangle defined by position and dimensions.
+
+    This class represents a rectangle with integer coordinates and dimensions,
+    commonly used for UI element bounds, clipping regions, and layout calculations.
+
+    Attributes:
+        x (int): The x coordinate of the top-left corner
+        y (int): The y coordinate of the top-left corner
+        w (int): The width of the rectangle
+        h (int): The height of the rectangle
+
+    Example:
+        >>> r = Rect(10, 20, 100, 50)
+        >>> print(f"Position: ({r.x}, {r.y}), Size: {r.w}x{r.h}")
+        Position: (10, 20), Size: 100x50
+    """
     cdef mu_Rect _rect
-    
+
     def __cinit__(self, int x=0, int y=0, int w=0, int h=0):
+        """Initialize a Rect with the given position and dimensions.
+
+        Args:
+            x (int, optional): The x coordinate of the top-left corner. Defaults to 0.
+            y (int, optional): The y coordinate of the top-left corner. Defaults to 0.
+            w (int, optional): The width of the rectangle. Defaults to 0.
+            h (int, optional): The height of the rectangle. Defaults to 0.
+        """
         self._rect.x = x
         self._rect.y = y
         self._rect.w = w
@@ -80,6 +170,7 @@ cdef class Rect:
 
     @property
     def x(self) -> int:
+        """Get or set the x coordinate of the top-left corner."""
         return self._rect.x
 
     @x.setter
@@ -88,6 +179,7 @@ cdef class Rect:
 
     @property
     def y(self) -> int:
+        """Get or set the y coordinate of the top-left corner."""
         return self._rect.y
 
     @y.setter
@@ -96,6 +188,7 @@ cdef class Rect:
 
     @property
     def w(self) -> int:
+        """Get or set the width of the rectangle."""
         return self._rect.w
 
     @w.setter
@@ -104,6 +197,7 @@ cdef class Rect:
 
     @property
     def h(self) -> int:
+        """Get or set the height of the rectangle."""
         return self._rect.h
 
     @h.setter
@@ -124,9 +218,34 @@ cdef class Rect:
 
 
 cdef class Color:
+    """An RGBA color with 8-bit components.
+
+    This class represents a color with red, green, blue, and alpha components,
+    each ranging from 0 to 255. It's used throughout the UI system for
+    rendering text, backgrounds, borders, and other visual elements.
+
+    Attributes:
+        r (int): Red component (0-255)
+        g (int): Green component (0-255)
+        b (int): Blue component (0-255)
+        a (int): Alpha component (0-255, where 0 is transparent and 255 is opaque)
+
+    Example:
+        >>> red = Color(255, 0, 0)        # Fully opaque red
+        >>> semi_blue = Color(0, 0, 255, 128)  # Semi-transparent blue
+        >>> print(red)  # Output: Color(255, 0, 0, 255)
+    """
     cdef mu_Color _color
-    
+
     def __cinit__(self, int r=0, int g=0, int b=0, int a=255):
+        """Initialize a Color with the given RGBA values.
+
+        Args:
+            r (int, optional): Red component (0-255). Defaults to 0.
+            g (int, optional): Green component (0-255). Defaults to 0.
+            b (int, optional): Blue component (0-255). Defaults to 0.
+            a (int, optional): Alpha component (0-255). Defaults to 255 (fully opaque).
+        """
         self._color.r = r
         self._color.g = g
         self._color.b = b
@@ -134,32 +253,36 @@ cdef class Color:
 
     @property
     def r(self) -> int:
+        """Get or set the red component (0-255)."""
         return self._color.r
 
     @r.setter
     def r(self, int value):
         self._color.r = value
-    
+
     @property
     def g(self) -> int:
+        """Get or set the green component (0-255)."""
         return self._color.g
-    
+
     @g.setter
     def g(self, int value):
         self._color.g = value
-    
+
     @property
     def b(self) -> int:
+        """Get or set the blue component (0-255)."""
         return self._color.b
-    
+
     @b.setter
     def b(self, int value):
         self._color.b = value
-    
+
     @property
     def a(self) -> int:
+        """Get or set the alpha component (0-255, where 0 is transparent)."""
         return self._color.a
-    
+
     @a.setter
     def a(self, int value):
         self._color.a = value
@@ -318,6 +441,27 @@ cdef int text_height(mu_Font font) noexcept:
 
 # Main Context class
 cdef class Context:
+    """The main microui context for creating and managing UI elements.
+
+    This is the primary class for building immediate-mode user interfaces.
+    It manages the UI state, handles input events, and provides methods
+    for creating windows, widgets, and controlling layout.
+
+    The Context follows an immediate-mode paradigm where UI elements
+    are created and processed each frame rather than being persistent objects.
+
+    Example:
+        >>> ctx = Context()
+        >>> ctx.begin()
+        >>> if ctx.begin_window("My Window", rect(10, 10, 200, 150)):
+        ...     ctx.label("Hello, World!")
+        ...     ctx.end_window()
+        >>> ctx.end()
+
+    Note:
+        Always call begin() at the start of each frame and end() at the end.
+        Remember to call end_window() for every begin_window() that returns True.
+    """
     cdef mu_Context* ptr
     cdef bint owner
     cdef mu_Command* current_command
@@ -334,6 +478,14 @@ cdef class Context:
             self.ptr = NULL
 
     def __init__(self):
+        """Initialize a new microui context.
+
+        Creates and initializes the underlying microui context with default
+        text measurement callbacks. The context is ready to use after initialization.
+
+        Raises:
+            MemoryError: If memory allocation for the context fails.
+        """
         self.ptr = <mu_Context*>malloc(sizeof(mu_Context))
         if self.ptr is NULL:
             raise MemoryError("Failed to allocate Context")
@@ -360,31 +512,69 @@ cdef class Context:
 
     @property
     def style(self) -> Style:
+        """Get the current style configuration for the context.
+
+        Returns:
+            Style: The style object containing colors, spacing, and sizing information.
+        """
         return Style.from_ptr(<mu_Style*>self.ptr.style)
 
     def begin(self):
-        """Start a new frame"""
+        """Start a new UI frame.
+
+        This must be called at the beginning of each frame before any UI elements
+        are created. It prepares the context for a new frame of UI processing.
+
+        Note:
+            Always pair this with a call to end() at the end of the frame.
+        """
         mu_begin(self.ptr)
         # Reset command iterator for new frame
         self.current_command = NULL
     
     def end(self):
-        """End the current frame"""
+        """End the current UI frame.
+
+        This must be called at the end of each frame after all UI elements
+        have been processed. It finalizes the frame and prepares rendering commands.
+
+        Note:
+            Always pair this with a call to begin() at the start of the frame.
+        """
         mu_end(self.ptr)
     
     def set_focus(self, unsigned int id):
-        """Set the focused widget"""
+        """Set the focused widget.
+
+        Args:
+            id (int): The widget ID to focus
+        """
         mu_set_focus(self.ptr, id)
     
     def get_id(self, data) -> int:
-        """Get an ID for the given data"""
+        """Get an ID for the given data.
+
+        Args:
+            data: The data to generate an ID for (string, bytes, or any object)
+
+        Returns:
+            int: A unique ID for the given data
+
+        Raises:
+            UnicodeEncodeError: If data cannot be encoded to UTF-8
+        """
+
         cdef bytes bdata
-        if isinstance(data, str):
-            bdata = data.encode('utf-8')
-        elif isinstance(data, bytes):
-            bdata = data
-        else:
-            bdata = str(data).encode('utf-8')
+        try:
+            if isinstance(data, str):
+                bdata = data.encode('utf-8')
+            elif isinstance(data, bytes):
+                bdata = data
+            else:
+                bdata = str(data).encode('utf-8')
+        except UnicodeEncodeError as e:
+            raise UnicodeEncodeError("Failed to encode data for ID generation") from e
+
         return mu_get_id(self.ptr, <const char*>bdata, len(bdata))
     
     def push_id(self, data):
@@ -493,8 +683,23 @@ cdef class Context:
     
     # Widget functions
     def text(self, str text):
-        """Draw text"""
-        cdef bytes btext = text.encode('utf-8')
+        """Draw text.
+
+        Args:
+            text (str): The text to draw
+
+        Raises:
+            UnicodeEncodeError: If text cannot be encoded to UTF-8
+        """
+        if text is None:
+            text = ""
+
+        cdef bytes btext
+        try:
+            btext = text.encode('utf-8')
+        except UnicodeEncodeError as e:
+            raise UnicodeEncodeError("Failed to encode text") from e
+
         mu_text(self.ptr, btext)
     
     def label(self, str text):
@@ -529,32 +734,60 @@ cdef class Context:
         return 0  # MU_RES_NONE
     
     def textbox_ex(self, str buf, int bufsz, int opt=0) -> tuple:
-        """Create a textbox - returns (result, new_text)"""
-        # This is a simplified implementation that doesn't maintain state between frames
-        # For proper textbox functionality, we would need a persistent buffer class
-        # For now, this will work for basic text input but won't maintain cursor position
-        
+        """Create a textbox with enhanced memory safety - returns (result, new_text)
+
+        Args:
+            buf (str): Initial text content
+            bufsz (int): Buffer size in bytes (must be > 0)
+            opt (int, optional): Options flags. Defaults to 0.
+
+        Returns:
+            tuple: (result_flags, new_text_content)
+
+        Raises:
+            ValueError: If buffer size is invalid
+            MemoryError: If memory allocation fails
+        """
+        # Validate buffer size
+        if bufsz <= 0:
+            raise ValueError("Buffer size must be positive")
+        if bufsz > 1024 * 1024:  # 1MB limit for safety
+            raise ValueError("Buffer size too large (max 1MB)")
+
         cdef char* c_buf = <char*>malloc(bufsz)
         if c_buf == NULL:
             raise MemoryError("Failed to allocate textbox buffer")
-        
+
         cdef bytes b_buf
         cdef int copy_len
         cdef int result
-        
+        cdef int encoded_len
+
         try:
-            # Copy initial text to buffer
+            # Encode and validate input text
             b_buf = buf.encode('utf-8')
-            copy_len = min(len(b_buf), bufsz - 1)
-            memcpy(c_buf, <const char*>b_buf, copy_len)
+            encoded_len = len(b_buf)
+
+            # Ensure we have space for null terminator
+            if bufsz < 2:
+                raise ValueError("Buffer too small (minimum 2 bytes)")
+
+            # Calculate safe copy length with explicit bounds check
+            copy_len = min(encoded_len, bufsz - 1)
+            if copy_len < 0:
+                copy_len = 0
+
+            # Safe memory copy with bounds verification
+            if copy_len > 0 and encoded_len > 0:
+                memcpy(c_buf, <const char*>b_buf, copy_len)
             c_buf[copy_len] = 0  # null terminate
-            
+
             # Call microui function
             result = mu_textbox_ex(self.ptr, c_buf, bufsz, opt)
-            
-            # Convert back to Python string
+
+            # Convert back to Python string with error handling
             new_text = c_buf.decode('utf-8', errors='replace')
-            
+
             return (result, new_text)
         finally:
             free(c_buf)
@@ -598,8 +831,34 @@ cdef class Context:
         mu_end_treenode(self.ptr)
     
     def begin_window(self, str title, Rect rect, int opt=0) -> int:
-        """Begin a window"""
-        cdef bytes btitle = title.encode('utf-8')
+        """Begin a window.
+
+        Args:
+            title (str): The window title
+            rect (Rect): The window bounds
+            opt (int, optional): Window options flags. Defaults to 0.
+
+        Returns:
+            int: Non-zero if the window is open and should be processed
+
+        Raises:
+            RuntimeError: If the context is not properly initialized
+            ValueError: If title is empty or rect has invalid dimensions
+            UnicodeEncodeError: If title cannot be encoded to UTF-8
+        """
+        if self.ptr == NULL:
+            raise RuntimeError("Context not initialized")
+        if not title:
+            raise ValueError("Window title cannot be empty")
+        if rect.w < 0 or rect.h < 0:
+            raise ValueError("Window dimensions cannot be negative")
+
+        cdef bytes btitle
+        try:
+            btitle = title.encode('utf-8')
+        except UnicodeEncodeError as e:
+            raise UnicodeEncodeError("Failed to encode window title") from e
+
         return mu_begin_window_ex(self.ptr, btitle, rect.to_c(), opt)
     
     def end_window(self):
@@ -715,20 +974,49 @@ cdef class Context:
             return BaseCommand.from_c(self.current_command.base)
     
     def layout_row(self, widths, int height):
-        """Set up a row layout with specific widths"""
+        """Set up a row layout with specific widths.
+
+        Args:
+            widths: List or tuple of column widths, or None for default
+            height (int): Row height in pixels
+
+        Raises:
+            ValueError: If widths list is too large or contains invalid values
+            MemoryError: If memory allocation fails
+        """
         cdef int* width_array = NULL
         cdef int items = 0
         cdef int i
-        
+        cdef size_t allocation_size
+
         if widths is not None:
             if isinstance(widths, (list, tuple)):
                 items = len(widths)
-                width_array = <int*>malloc(items * sizeof(int))
-                if width_array == NULL:
-                    raise MemoryError("Failed to allocate width array")
-                for i in range(items):
-                    width_array[i] = widths[i]
-        
+
+                # Validate array size to prevent overflow
+                if items < 0:
+                    raise ValueError("Invalid widths list")
+                if items > 1000:  # Reasonable limit
+                    raise ValueError("Too many width entries (max 1000)")
+
+                if items > 0:
+                    # Check for potential overflow in allocation size
+                    allocation_size = items * sizeof(int)
+                    if allocation_size / sizeof(int) != items:
+                        raise ValueError("Width array too large")
+
+                    width_array = <int*>malloc(allocation_size)
+                    if width_array == NULL:
+                        raise MemoryError("Failed to allocate width array")
+
+                    # Copy with validation
+                    for i in range(items):
+                        try:
+                            width_array[i] = int(widths[i])
+                        except (ValueError, TypeError) as e:
+                            free(width_array)
+                            raise ValueError(f"Invalid width value at index {i}: {widths[i]}")
+
         try:
             mu_layout_row(self.ptr, items, width_array, height)
         finally:
@@ -1007,11 +1295,45 @@ class Key:
 
 # Textbox class for persistent state
 cdef class Textbox:
+    """A persistent textbox widget with automatic memory management.
+
+    This class provides a textbox that maintains its state between frames,
+    including cursor position and selection. It handles memory allocation
+    and cleanup automatically.
+
+    Args:
+        buffer_size (int, optional): Size of the internal buffer in bytes. Defaults to 128.
+                                   Must be between 2 and 65536 bytes.
+
+    Raises:
+        ValueError: If buffer_size is invalid
+        MemoryError: If memory allocation fails
+
+    Example:
+        >>> textbox = Textbox(256)
+        >>> textbox.text = "Hello, World!"
+        >>> result, new_text = textbox.update(ctx)
+    """
     cdef char* buffer
     cdef int buffer_size
     cdef str current_text
-    
+
     def __cinit__(self, int buffer_size=128):
+        """Initialize the textbox with the specified buffer size.
+
+        Args:
+            buffer_size (int, optional): Buffer size in bytes. Defaults to 128.
+
+        Raises:
+            ValueError: If buffer_size is invalid
+            MemoryError: If memory allocation fails
+        """
+        # Validate buffer size
+        if buffer_size < 2:
+            raise ValueError("Buffer size must be at least 2 bytes")
+        if buffer_size > 65536:  # 64KB limit
+            raise ValueError("Buffer size too large (max 64KB)")
+
         self.buffer_size = buffer_size
         self.buffer = <char*>malloc(buffer_size)
         if self.buffer == NULL:
@@ -1025,9 +1347,31 @@ cdef class Textbox:
             self.buffer = NULL
     
     def update(self, Context ctx, int opt=0) -> tuple:
-        """Update the textbox and return (result, new_text)"""
+        """Update the textbox and return (result, new_text).
+
+        Args:
+            ctx (Context): The microui context
+            opt (int, optional): Textbox options flags. Defaults to 0.
+
+        Returns:
+            tuple: (result_flags, current_text)
+
+        Raises:
+            ValueError: If ctx is None
+            RuntimeError: If buffer is corrupted
+        """
+        if ctx is None:
+            raise ValueError("Context cannot be None")
+        if self.buffer == NULL:
+            raise RuntimeError("Textbox buffer is corrupted")
+
         cdef int result = mu_textbox_ex(ctx.ptr, self.buffer, self.buffer_size, opt)
-        self.current_text = self.buffer.decode('utf-8', errors='replace')
+        try:
+            self.current_text = self.buffer.decode('utf-8', errors='replace')
+        except Exception as e:
+            # Fallback to empty string if decoding fails completely
+            self.current_text = ""
+
         return (result, self.current_text)
     
     @property
@@ -1036,11 +1380,44 @@ cdef class Textbox:
     
     @text.setter
     def text(self, str value):
+        """Set the textbox content with enhanced memory safety.
+
+        Args:
+            value (str): The new text content
+
+        Raises:
+            ValueError: If the text is too long for the buffer
+        """
+        if value is None:
+            value = ""
+
         cdef bytes b_value = value.encode('utf-8')
-        cdef int copy_len = min(len(b_value), self.buffer_size - 1)
-        memcpy(self.buffer, <const char*>b_value, copy_len)
-        self.buffer[copy_len] = 0  # null terminate
-        self.current_text = value
+        cdef int encoded_len = len(b_value)
+        cdef int copy_len
+
+        # Validate buffer has space for at least null terminator
+        if self.buffer_size < 1:
+            raise ValueError("Buffer too small")
+
+        # Calculate safe copy length with explicit bounds check
+        copy_len = min(encoded_len, self.buffer_size - 1)
+        if copy_len < 0:
+            copy_len = 0
+
+        # Only copy if we have valid data and space
+        if copy_len > 0 and encoded_len > 0 and self.buffer != NULL:
+            memcpy(self.buffer, <const char*>b_value, copy_len)
+
+        # Always null terminate within buffer bounds
+        if self.buffer != NULL and copy_len < self.buffer_size:
+            self.buffer[copy_len] = 0
+
+        # Update current text (potentially truncated)
+        if copy_len < encoded_len:
+            # Text was truncated, decode what actually fits
+            self.current_text = self.buffer[:copy_len].decode('utf-8', errors='replace')
+        else:
+            self.current_text = value
 
 
 # Renderer functions exposed as module-level functions

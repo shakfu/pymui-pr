@@ -22,6 +22,9 @@ def test_window(ctx):
     """Test window with debug output"""
     global slider_value, checkbox_state
 
+    # Properly initialize frame
+    ctx.begin()
+
     if ctx.begin_window("Debug Test", pymui.rect(100, 100, 400, 300)):
         # Simple button test first
         ctx.layout_row([150, -1], 0)
@@ -79,6 +82,9 @@ def test_window(ctx):
         ctx.text("and click to test interactions")
 
         ctx.end_window()
+
+    # Properly end frame
+    ctx.end()
 
 
 def main():

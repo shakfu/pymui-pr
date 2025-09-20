@@ -42,6 +42,9 @@ def test_window(ctx):
     """Simple test window with interactive elements"""
     global slider_value, checkbox_state
 
+    # Properly initialize frame
+    ctx.begin()
+
     if ctx.begin_window("Interaction Test", pymui.rect(50, 50, 350, 250)):
         ctx.layout_row([120, -1], 0)
 
@@ -74,6 +77,9 @@ def test_window(ctx):
         ctx.text("Try interacting with the slider,\ncheckbox, and button above.\nPress ESC to exit.")
 
         ctx.end_window()
+
+    # Properly end frame
+    ctx.end()
 
 
 def main():
