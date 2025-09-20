@@ -40,23 +40,28 @@ pip install .
 ```python
 import pymui
 
-# Recommended: Use context manager (automatically calls begin/end)
+# Recommended: Use context managers for both frame and window management
 with pymui.Context() as ctx:
-    # Create a window
-    if ctx.begin_window("My Window", pymui.Rect(10, 10, 200, 150)):
-        # Create a button
-        if ctx.button("Click me!"):
-            print("Button was clicked!")
+    # Window context manager (automatically calls begin_window/end_window)
+    with ctx.window("My Window", 10, 10, 200, 150) as window:
+        if window.is_open:
+            # Create a button
+            if ctx.button("Click me!"):
+                print("Button was clicked!")
 
-        # Create a checkbox
-        result, checked = ctx.checkbox("Enable feature", True)
+            # Create a checkbox
+            result, checked = ctx.checkbox("Enable feature", True)
 
-        # Create a slider
-        result, value = ctx.slider(50.0, 0.0, 100.0)
+            # Create a slider
+            result, value = ctx.slider(50.0, 0.0, 100.0)
 
+# Alternative: Manual window management
+with pymui.Context() as ctx:
+    if ctx.begin_window("Manual Window", pymui.Rect(10, 10, 200, 150)):
+        # UI elements here...
         ctx.end_window()
 
-# Alternative: Manual frame management
+# Legacy: Manual frame management
 ctx = pymui.Context()
 ctx.begin()
 try:
@@ -150,6 +155,44 @@ def good_manual_approach():
         ctx.end()  # Always called
 ```
 
+### Window Context Manager
+
+PyMUI provides an additional context manager for windows that automatically handles `begin_window()` and `end_window()` calls:
+
+```python
+# 🎯 Recommended: Window context manager
+with pymui.Context() as ctx:
+    with ctx.window("My App", 10, 10, 300, 200) as window:
+        if window.is_open:
+            ctx.label("Content goes here")
+            if ctx.button("Click me"):
+                print("Button clicked!")
+        # end_window() called automatically
+
+# 🔧 Alternative: Manual window management
+with pymui.Context() as ctx:
+    if ctx.begin_window("Manual", pymui.Rect(10, 10, 300, 200)):
+        ctx.label("Content goes here")
+        ctx.end_window()  # Must remember to call this
+
+# 🏗️ Multiple windows with context managers
+with pymui.Context() as ctx:
+    with ctx.window("Window 1", 10, 10, 200, 150) as w1:
+        if w1.is_open:
+            ctx.label(f"Window: {w1.title}")
+
+    with ctx.window("Window 2", 220, 10, 200, 150) as w2:
+        if w2.is_open:
+            ctx.label(f"Size: {w2.rect.w}x{w2.rect.h}")
+```
+
+**Window Context Manager Benefits:**
+- **Automatic cleanup** - `end_window()` always called
+- **Exception safety** - Cleanup on errors
+- **Window state access** - `window.is_open`, `window.title`, `window.rect`, `window.opt`
+- **Cleaner code** - No manual begin/end window pairs
+- **Convenient API** - `ctx.window(title, x, y, w, h, opt=0)`
+
 ### Layout System
 
 PyMUI uses a flexible row-based layout system:
@@ -191,15 +234,14 @@ state = AppState()
 
 def update_ui():
     with pymui.Context() as ctx:
-        if ctx.begin_window("Counter", pymui.Rect(10, 10, 200, 100)):
-            ctx.label(f"Count: {state.counter}")
+        with ctx.window("Counter", 10, 10, 200, 100) as window:
+            if window.is_open:
+                ctx.label(f"Count: {state.counter}")
 
-            if ctx.button("Increment"):
-                state.counter += 1
+                if ctx.button("Increment"):
+                    state.counter += 1
 
-            result, state.enabled = ctx.checkbox("Enabled", state.enabled)
-
-            ctx.end_window()
+                result, state.enabled = ctx.checkbox("Enabled", state.enabled)
 ```
 
 ## Complete Example: Todo App
@@ -225,30 +267,29 @@ class TodoApp:
             del self.todos[index]
 
     def update(self):
-        with self.ctx:  # Use context manager
-            if self.ctx.begin_window("Todo App", pymui.Rect(50, 50, 400, 300)):
-                # Header
-                self.ctx.layout_row([-1], 25)
-                self.ctx.label("My Todo List")
+        with self.ctx:  # Frame context manager
+            with self.ctx.window("Todo App", 50, 50, 400, 300) as window:
+                if window.is_open:
+                    # Header
+                    self.ctx.layout_row([-1], 25)
+                    self.ctx.label("My Todo List")
 
-                # Todo list
-                for i, todo in enumerate(self.todos):
-                    self.ctx.layout_row([-50, -1], 25)
-                    self.ctx.label(todo)
+                    # Todo list
+                    for i, todo in enumerate(self.todos):
+                        self.ctx.layout_row([-50, -1], 25)
+                        self.ctx.label(todo)
 
-                    self.ctx.push_id(f"del_{i}")
-                    if self.ctx.button("Delete"):
-                        self.remove_todo(i)
-                    self.ctx.pop_id()
+                        self.ctx.push_id(f"del_{i}")
+                        if self.ctx.button("Delete"):
+                            self.remove_todo(i)
+                        self.ctx.pop_id()
 
-                # Add new todo
-                self.ctx.layout_row([-80, -1], 25)
-                result, self.new_todo = self.ctx.textbox(self.new_todo, 128)
+                    # Add new todo
+                    self.ctx.layout_row([-80, -1], 25)
+                    result, self.new_todo = self.ctx.textbox(self.new_todo, 128)
 
-                if self.ctx.button("Add") or (result & pymui.Result.SUBMIT):
-                    self.add_todo()
-
-                self.ctx.end_window()
+                    if self.ctx.button("Add") or (result & pymui.Result.SUBMIT):
+                        self.add_todo()
 
 # Run the app (with SDL2 renderer)
 if __name__ == "__main__":
@@ -622,7 +663,14 @@ make performance-test
 #### Window Management
 - `begin_window(title, rect, opt=0) -> int`
 - `end_window()`
+- `window(title, x, y, w, h, opt=0) -> Window` - **Context manager for automatic window management**
 - `get_current_container() -> Container`
+
+#### Window Context Manager
+- `Window.title -> str` - Window title (read-only)
+- `Window.rect -> Rect` - Window rectangle (read-only)
+- `Window.opt -> int` - Window options (read-only)
+- `Window.is_open -> bool` - Whether window is open and should be processed
 
 #### Layout
 - `layout_row(widths, height)`

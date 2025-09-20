@@ -450,30 +450,38 @@ cdef class Context:
     The Context follows an immediate-mode paradigm where UI elements
     are created and processed each frame rather than being persistent objects.
 
-    The Context supports Python's context manager protocol, allowing automatic
-    frame management with the 'with' statement.
+    The Context supports Python's context manager protocol for both frame and
+    window management, providing automatic cleanup with the 'with' statement.
 
     Examples:
-        Manual frame management:
-        >>> ctx = Context()
-        >>> ctx.begin()
-        >>> if ctx.begin_window("My Window", rect(10, 10, 200, 150)):
-        ...     ctx.label("Hello, World!")
-        ...     ctx.end_window()
-        >>> ctx.end()
+        Modern approach (recommended - context managers for frame and window):
+        >>> with Context() as ctx:
+        ...     with ctx.window("My Window", 10, 10, 200, 150) as window:
+        ...         if window.is_open:
+        ...             ctx.label("Hello, World!")
+        ...             if ctx.button("Click me"):
+        ...                 print("Button clicked!")
 
-        Automatic frame management (recommended):
+        Alternative (manual window management):
         >>> with Context() as ctx:
         ...     if ctx.begin_window("My Window", rect(10, 10, 200, 150)):
         ...         ctx.label("Hello, World!")
         ...         ctx.end_window()
 
-    Note:
-        When using manual frame management, always call begin() at the start
-        of each frame and end() at the end. When using the context manager,
-        begin() and end() are called automatically.
+        Legacy (manual frame management):
+        >>> ctx = Context()
+        >>> ctx.begin()
+        >>> try:
+        ...     # UI code here
+        ...     pass
+        ... finally:
+        ...     ctx.end()
 
-        Always remember to call end_window() for every begin_window() that returns True.
+    Note:
+        The recommended approach uses context managers for both frame and window
+        management. This provides automatic cleanup, exception safety, and cleaner code.
+        The window context manager automatically calls begin_window() and end_window(),
+        while the frame context manager automatically calls begin() and end().
     """
     cdef mu_Context* ptr
     cdef bint owner
@@ -559,13 +567,16 @@ cdef class Context:
     def __enter__(self):
         """Enter the context manager - automatically calls begin().
 
-        This allows using the Context with Python's 'with' statement:
+        This allows using the Context with Python's 'with' statement for automatic
+        frame management. For even cleaner code, use the window context manager too:
 
         Example:
             >>> with pymui.Context() as ctx:
-            ...     if ctx.begin_window("Window", pymui.rect(10, 10, 200, 150)):
-            ...         ctx.label("Hello, World!")
-            ...         ctx.end_window()
+            ...     with ctx.window("My Window", 10, 10, 200, 150) as window:
+            ...         if window.is_open:
+            ...             ctx.label("Hello, World!")
+            ...             if ctx.button("Click me"):
+            ...                 print("Button clicked!")
 
         Returns:
             Context: Returns self to allow method chaining
@@ -911,7 +922,31 @@ cdef class Context:
     def end_window(self):
         """End a window"""
         mu_end_window(self.ptr)
-    
+
+    def window(self, str title, int x, int y, int w, int h, int opt=0):
+        """Create a window context manager.
+
+        This provides a more convenient way to create windows using Python's 'with' statement.
+        The window will be automatically ended when the context exits.
+
+        Args:
+            title (str): The window title
+            x (int): X position of the window
+            y (int): Y position of the window
+            w (int): Width of the window
+            h (int): Height of the window
+            opt (int, optional): Window options flags. Defaults to 0.
+
+        Returns:
+            Window: A window context manager object
+
+        Example:
+            >>> with ctx.window("My Window", 10, 10, 200, 150) as window:
+            ...     if window.is_open:
+            ...         ctx.label("Hello, World!")
+        """
+        return Window(self, title, Rect(x, y, w, h), opt)
+
     def open_popup(self, str name):
         """Open a popup"""
         cdef bytes bname = name.encode('utf-8')
@@ -1069,6 +1104,80 @@ cdef class Context:
         finally:
             if width_array != NULL:
                 free(width_array)
+
+
+# Window context manager class
+cdef class Window:
+    """Context manager for microui windows.
+
+    This class provides automatic window management using Python's context manager
+    protocol. When entering the context, it calls begin_window(), and when exiting,
+    it calls end_window().
+
+    Attributes:
+        is_open (bool): True if the window is open and should be processed
+    """
+    cdef Context ctx
+    cdef str _title
+    cdef Rect _rect
+    cdef int _opt
+    cdef public bint is_open
+
+    def __cinit__(self, Context ctx, str title, Rect rect, int opt=0):
+        """Initialize window context manager.
+
+        Args:
+            ctx (Context): The microui context
+            title (str): Window title
+            rect (Rect): Window rectangle (position and size)
+            opt (int): Window options flags
+        """
+        self.ctx = ctx
+        self._title = title
+        self._rect = rect
+        self._opt = opt
+        self.is_open = False
+
+    @property
+    def title(self) -> str:
+        """Get the window title."""
+        return self._title
+
+    @property
+    def rect(self) -> Rect:
+        """Get the window rectangle."""
+        return self._rect
+
+    @property
+    def opt(self) -> int:
+        """Get the window options."""
+        return self._opt
+
+    def __enter__(self):
+        """Enter the window context - calls begin_window().
+
+        Returns:
+            Window: Returns self to allow access to is_open property
+        """
+        self.is_open = bool(self.ctx.begin_window(self._title, self._rect, self._opt))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the window context - calls end_window().
+
+        This ensures end_window() is called even if an exception occurs.
+
+        Args:
+            exc_type: Exception type (if any)
+            exc_val: Exception value (if any)
+            exc_tb: Exception traceback (if any)
+
+        Returns:
+            None: Does not suppress exceptions
+        """
+        if self.is_open:
+            self.ctx.end_window()
+        return None
 
 
 # Container wrapper class

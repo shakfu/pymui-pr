@@ -21,7 +21,7 @@ test:
 
 test-safe:
 	@echo "Running only safe tests (no UI context operations)..."
-	@uv run pytest tests/test_pymui.py tests/test_property_minimal.py tests/test_memory_safety.py tests/test_context_manager.py
+	@uv run pytest tests/test_pymui.py tests/test_property_minimal.py tests/test_memory_safety.py tests/test_context_manager.py tests/test_window_context_manager.py
 
 test-all:
 	@echo "Running ALL tests (including potentially unstable UI context tests)..."
